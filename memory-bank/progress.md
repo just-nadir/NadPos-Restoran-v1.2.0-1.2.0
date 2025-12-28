@@ -24,7 +24,7 @@
     -   Foreign Key Constraints removed on Server for robust Sync.
 -   [x] **UI Bugs Fixed**: Shift "Already Open" after Sync resolved.
 -   [x] **Weighted Products**: Mahsulotlarni kg va dona da sotish imkoniyati qo'shildi (Waiter App + DB).
-
+-   [x] **Windows Distribution**: `dist:win` va `electron-builder` muammolari hal qilindi va `.exe` installer yaratildi.
 
 
 

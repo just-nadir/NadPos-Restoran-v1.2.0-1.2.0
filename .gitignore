@@ -111,7 +111,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+
 # Build artifacts
 release/
 build/
 out/
+.builder-cache/
+winCodeSign/
+*.7z
+

@@ -36,7 +36,9 @@ Hozirda asosiy e'tibor tizimning barqarorligini ta'minlash, VPS serverda ishlash
         -   Added `unit_type` ('item' | 'kg') to `products` table.
         -   Implemented **Weight Input Modal** in Waiter App for 'kg' products.
         -   Updated `useCart` to handle float quantities.
-
+    -   **Windows Build Success**: 
+        -   Resolved `winCodeSign`/`7zip` issues using **Local Cache** (`.builder-cache`) and **Clean Reinstall**.
+        -   Successfully generated `NadPOS Restoran Setup 2.0.0.exe` using `electron-builder` with custom environment variables.
 
 
 

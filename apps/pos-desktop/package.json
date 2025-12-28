@@ -16,11 +16,13 @@
     "install:deps": "electron-builder install-app-deps",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win --x64",
+    "dist:dir": "npm run build && electron-builder --win --dir --x64",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "7zip-bin": "^5.2.0",
     "axios": "^1.13.2",
     "better-sqlite3": "^9.6.0",
     "cors": "^2.8.5",

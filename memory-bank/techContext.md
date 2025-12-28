@@ -36,6 +36,9 @@
     -   `npm run dev`: Cloud serverni lokal ishga tushirish (agar root da bo'lsa).
     -   `npm run electron:dev`: POS Desktopni development rejimida ishga tushirish.
     -   `npm run build`: Loyihani yig'ish.
+    -   `npm run dist:win` (in `apps/pos-desktop`): Windows Installer (.exe) yaratish.
+        -   **Note**: Agar `winCodeSign`/`7zip` xatolik bersa, quyidagi command ishlatilsin:
+        -   `$env:ELECTRON_BUILDER_CACHE="./.builder-cache"; $env:CSC_IDENTITY_AUTO_DISCOVERY="false"; npm run dist:win`
 
 ## Texnik Cheklovlar
 -   **Internet**: POS oflayn ishlay oladi, lekin dastlabki sozlash (`Onboarding`) uchun internet kerak.
