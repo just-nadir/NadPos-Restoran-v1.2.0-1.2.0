@@ -1,0 +1,17 @@
+{
+    "name": "nadpos-monorepo",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "tools/*"
+    ],
+    "scripts": {
+        "install:all": "npm install",
+        "dev:pos": "npm run dev --workspace=apps/pos-desktop",
+        "dev:cloud-admin": "npm run dev --workspace=apps/cloud-admin",
+        "dev:server": "npm run start:dev --workspace=apps/cloud-server",
+        "build:pos": "npm run build --workspace=apps/pos-desktop",
+        "build:cloud-admin": "npm run build --workspace=apps/cloud-admin",
+        "build:server": "npm run build --workspace=apps/cloud-server"
+    }
+}

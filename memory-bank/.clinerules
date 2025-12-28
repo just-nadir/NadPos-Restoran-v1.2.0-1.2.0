@@ -1,0 +1,19 @@
+# Project Rules (.clinerules)
+
+## Til va Muloqot
+-   **Asosiy til**: O'zbek tili. Barcha javoblar, sharhlar va hujjatlar o'zbek tilida bo'lishi shart.
+-   **Aniq va lo'nda**: Javoblar qisqa, aniq va tushunarli bo'lishi kerak.
+
+## Kodlash Standartlari
+-   **NestJS**: Controller-Service-Repository patterniga qatiy rioya qilish.
+-   **React**: Functional components va Hooks ishlatish.
+-   **Type Safety**: `any` turidan qochish, har doim interfeyslar va turlarni aniqlash.
+-   **File Naming**: Kebab-case (`user-profile.component.tsx`, `auth.service.ts`).
+
+## Memory Bank
+-   Har bir sessiya boshida Memory Bank fayllarini o'qib chiqish majburiy.
+-   Katta o'zgarishlardan so'ng `activeContext.md` va `progress.md` yangilanishi kerak.
+
+## Maxsus Ko'rsatmalar
+-   **Aesthetics**: Web ilovalar dizayni juda chiroyli va zamonaviy bo'lishi kerak ("WOW" effekti).
+-   **Monorepo**: Ilovalar o'rtasidagi bog'liqlikni to'g'ri boshqarish (Nx/Turbo qoidalari).

@@ -1,0 +1,20 @@
+# Active Context
+
+## Joriy Fokus
+Hozirda asosiy e'tibor loyiha uchun "Memory Bank" tizimini to'liq joriy etishga qaratilgan. Bu loyihani boshqarishni osonlashtiradi va keyingi sessiyalarda kontekstni yo'qotmaslikka yordam beradi.
+
+## So'nggi O'zgarishlar
+-   [GEMINI.md](file:///home/ares/Desktop/NadPos-Restoran-v1.2.0-1.2.0/GEMINI.md) dagi ko'rsatmalar asosida Memory Bank strukturasi yaratildi.
+-   [projectbrief.md](file:///home/ares/.gemini/antigravity/brain/b4dc5676-abd2-4a95-b5d8-48bb7076bfd1/memory-bank/projectbrief.md): Loyiha maqsadlari belgilandi.
+-   [productContext.md](file:///home/ares/.gemini/antigravity/brain/b4dc5676-abd2-4a95-b5d8-48bb7076bfd1/memory-bank/productContext.md): Muammo va yechimlar tahlil qilindi.
+-   [systemPatterns.md](file:///home/ares/.gemini/antigravity/brain/b4dc5676-abd2-4a95-b5d8-48bb7076bfd1/memory-bank/systemPatterns.md): Tizim arxitekturasi chizildi.
+-   [techContext.md](file:///home/ares/.gemini/antigravity/brain/b4dc5676-abd2-4a95-b5d8-48bb7076bfd1/memory-bank/techContext.md): Texnologik stack hujjatlashtirildi.
+
+## Keyingi Qadamlar
+1.  Memory Bank fayllarini to'ldirishni yakunlash.
+2.  Litsenziya tizimini olib tashlash bo'yicha ishlarni rejalashtirish (avvalgi suhbatlardan kelib chiqqan holda).
+3.  Admin panelda restoranlarni boshqarish funksiyasini tekshirish.
+
+## Faol Qarorlar
+-   Barcha hujjatlar **O'zbek tilida** yuritiladi.
+-   Documentation (.md) fayllar `memory-bank` papkasida saqlanadi.
