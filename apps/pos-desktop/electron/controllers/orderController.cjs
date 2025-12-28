@@ -125,8 +125,8 @@ module.exports = {
                 const newTotal = (currentTable ? currentTable.total_amount : 0) + additionalTotal;
                 const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                const isOrphan = !currentTable.waiter_id || currentTable.waiter_id === 0;
-                const isUnknown = currentTable.waiter_name === "Noma'lum" || currentTable.waiter_name === "Kassir";
+                const isOrphan = !currentTable.waiter_id || currentTable.waiter_id == 0;
+                const isUnknown = !currentTable.waiter_name || currentTable.waiter_name === "Noma'lum" || currentTable.waiter_name === "Kassir";
                 const isFree = currentTable.status === 'free';
 
                 if (isFree || isOrphan || isUnknown) {
