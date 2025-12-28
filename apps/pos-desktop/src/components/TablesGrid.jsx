@@ -197,7 +197,4 @@ const TablesGrid = ({ onSelectTable }) => {
 };
 
 // React.memo bilan render optimizatsiyasi
-export default React.memo(TablesGrid, (prevProps, nextProps) => {
-  // Faqat onSelectTable funksiyasi o'zgarmasa, re-render qilmaymiz
-  return prevProps.onSelectTable === nextProps.onSelectTable;
-});
+export default TablesGrid;

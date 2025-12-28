@@ -3,18 +3,18 @@ import { useState, useMemo } from 'react';
 export const useCart = () => {
   const [cart, setCart] = useState([]);
 
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
-        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + quantity } : item);
       }
-      return [...prev, { ...product, qty: 1 }];
+      return [...prev, { ...product, qty: quantity }];
     });
   };
 
   const removeFromCart = (productId) => {
-    setCart(prev => prev.map(item => 
+    setCart(prev => prev.map(item =>
       item.id === productId ? { ...item, qty: Math.max(0, item.qty - 1) } : item
     ).filter(item => item.qty > 0));
   };

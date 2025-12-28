@@ -41,7 +41,7 @@ module.exports = {
 
     addProduct: (p) => {
         const id = crypto.randomUUID();
-        const res = db.prepare('INSERT INTO products (id, category_id, name, price, destination, is_active, is_synced) VALUES (?, ?, ?, ?, ?, ?, 0)').run(id, p.category_id, p.name, p.price, String(p.destination), 1);
+        const res = db.prepare('INSERT INTO products (id, category_id, name, price, destination, unit_type, is_active, is_synced) VALUES (?, ?, ?, ?, ?, ?, ?, 0)').run(id, p.category_id, p.name, p.price, String(p.destination), p.unit_type || 'item', 1);
         notify('products', null);
         return res;
     },

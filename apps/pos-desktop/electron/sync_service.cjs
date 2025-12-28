@@ -261,20 +261,29 @@ function applyChanges(tablesData) {
                 if (Object.keys(cleanRecord).length === 0) continue;
 
                 // SPECIAL LOGIC: ADMIN CONSOLIDATION
-                // Agar serverdan kelayotgan user Admin bo'lsa va bizda boshqa ID bilan Admin bo'lsa (ayniqsa Default Admin)
-                // uni o'chirib tashlaymiz, toki 2 ta admin bo'lib qolmasin.
+                // Agar serverdan kelayotgan user Admin bo'lsa...
                 if (table === 'users' && cleanRecord.role === 'admin' && !cleanRecord.deleted_at) {
                     const existingAdmins = db.prepare("SELECT id FROM users WHERE role = 'admin' AND deleted_at IS NULL").all();
                     for (const admin of existingAdmins) {
                         if (admin.id !== cleanRecord.id) {
-                            // Agar bizdagi admin servernikidan farq qilsa, demak bu eski yoki default admin -> o'chiramiz/yashiramiz
-                            // Biroq, ehtiyot bo'lish kerak.
-                            // Eng yaxshisi: Agar bizdagi adminning IDsi biz bilgan "Default Fixed ID" bo'lsa, aniq o'chiramiz.
-                            // Yoki oddiyroq: Agar serverdan admin keldi, bizdagi boshqa barcha adminlarni "deleted_at" qilib yuboramiz (agar o'zi bo'lmasa).
-                            // Shunda serverdagi "Primary" admin qoladi.
                             db.prepare("UPDATE users SET deleted_at = ?, is_synced = 1 WHERE id = ?").run(new Date().toISOString(), admin.id);
                             console.log(`⚠️ Duplicate Admin fix: Marked local admin ${admin.id} as deleted in favor of ${cleanRecord.id}`);
                         }
+                    }
+                }
+
+                // SPECIAL LOGIC: KITCHEN DEDUPLICATION
+                if (table === 'kitchens' && !cleanRecord.deleted_at) {
+                    const existingKitchen = db.prepare("SELECT id FROM kitchens WHERE name = ? AND id != ? AND deleted_at IS NULL").get(cleanRecord.name, cleanRecord.id);
+                    if (existingKitchen) {
+                        console.log(`⚠️ Duplicate Kitchen found: "${cleanRecord.name}". Merging Local (${existingKitchen.id}) -> Synced (${cleanRecord.id})`);
+
+                        // 1. Move references (Products)
+                        db.prepare("UPDATE products SET destination = ? WHERE destination = ?").run(cleanRecord.id, existingKitchen.id);
+                        db.prepare("UPDATE order_items SET destination = ? WHERE destination = ?").run(cleanRecord.id, existingKitchen.id);
+
+                        // 2. Soft-delete duplicate
+                        db.prepare("UPDATE kitchens SET deleted_at = ?, is_synced = 1 WHERE id = ?").run(new Date().toISOString(), existingKitchen.id);
                     }
                 }
 

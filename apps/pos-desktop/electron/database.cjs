@@ -79,9 +79,17 @@ function createV2Tables() {
         price REAL NOT NULL,
         destination TEXT DEFAULT '1', -- Kitchen ID (UUID)
         is_active INTEGER DEFAULT 1,
+        unit_type TEXT DEFAULT 'item', -- 'item' | 'kg'
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, deleted_at TEXT,
         FOREIGN KEY(category_id) REFERENCES categories(id)
     )`).run();
+
+    // Hotfix: Add unit_type if missing (for existing V2 DBs)
+    try {
+        db.prepare("ALTER TABLE products ADD COLUMN unit_type TEXT DEFAULT 'item'").run();
+    } catch (e) {
+        // Column likely exists, ignore
+    }
 
     // 3. Buyurtmalar
     db.prepare(`CREATE TABLE IF NOT EXISTS order_items (

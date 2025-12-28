@@ -31,6 +31,9 @@ const WaiterApp = () => {
   // Search Logic
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Weight Modal Logic
+  const [weightModal, setWeightModal] = useState({ show: false, product: null, weight: '' });
+
   // Offline Logic
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -190,6 +193,57 @@ const WaiterApp = () => {
     )
   };
 
+  const handleWeightInput = (num) => {
+    if (num === 'back') {
+      setWeightModal(prev => ({ ...prev, weight: prev.weight.slice(0, -1) }));
+    } else if (num === '.') {
+      if (!weightModal.weight.includes('.')) {
+        setWeightModal(prev => ({ ...prev, weight: prev.weight + '.' }));
+      }
+    } else {
+      setWeightModal(prev => ({ ...prev, weight: prev.weight + num }));
+    }
+  };
+
+  const confirmWeight = () => {
+    if (!weightModal.weight || parseFloat(weightModal.weight) <= 0) return;
+    const qty = parseFloat(weightModal.weight);
+    addToCart(weightModal.product, qty);
+    setWeightModal({ show: false, product: null, weight: '' });
+  };
+
+  const WeightModal = () => {
+    if (!weightModal.show) return null;
+    return (
+      <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl relative">
+          <button onClick={() => setWeightModal({ show: false, product: null, weight: '' })} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500"><X size={24} /></button>
+          <h2 className="text-2xl font-black text-gray-800 text-center mb-2">{weightModal.product?.name}</h2>
+          <p className="text-center text-gray-500 font-medium mb-6">Miqdorni kiriting ({weightModal.product?.unit_type === 'kg' ? 'kg' : 'dona'})</p>
+
+          <div className="bg-gray-100 rounded-2xl p-4 mb-6 text-center">
+            <span className="text-5xl font-black text-gray-800">{weightModal.weight || '0'}</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0].map(n => (
+              <button key={n} onClick={() => handleWeightInput(n.toString())} className="h-16 bg-white rounded-xl shadow-sm text-2xl font-bold text-gray-700 active:scale-95 border border-gray-200">
+                {n}
+              </button>
+            ))}
+            <button onClick={() => handleWeightInput('back')} className="h-16 bg-red-50 rounded-xl shadow-sm text-red-500 active:scale-95 border border-red-100 flex items-center justify-center">
+              <ChevronLeft size={24} />
+            </button>
+          </div>
+
+          <button onClick={confirmWeight} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl shadow-blue-200 active:scale-95 flex items-center justify-center gap-2">
+            Qo'shish <ShoppingBag size={20} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // --- TABLES VIEW ---
   if (view === 'tables') {
     // Filtrlash logikasi
@@ -205,6 +259,7 @@ const WaiterApp = () => {
       <div className="min-h-screen bg-gray-50 pb-20 relative font-sans">
         <OfflineBanner />
         <GuestModal />
+        <WeightModal />
 
         {toast && (
           <div className={`fixed top-6 left-4 right-4 z-50 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold flex items-center gap-3 animate-in slide-in-from-top duration-300 ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-500'}`}>
@@ -306,6 +361,7 @@ const WaiterApp = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col h-screen overflow-hidden relative font-sans">
       <OfflineBanner />
       <GuestModal />
+      <WeightModal />
       <ConfirmModal isOpen={showConfirmOrder} onClose={() => setShowConfirmOrder(false)} onConfirm={sendOrder} title="Tasdiqlash" message={`Jami: ${cartTotal.toLocaleString()} so'm`} confirmText="Yuborish" isDanger={false} />
 
       {/* Top Bar */}
@@ -445,7 +501,13 @@ const WaiterApp = () => {
                     .map(product => {
                       const inCart = cart.find(c => c.id === product.id);
                       return (
-                        <div key={product.id} onClick={() => addToCart(product)}
+                        <div key={product.id} onClick={() => {
+                          if (product.unit_type === 'kg') {
+                            setWeightModal({ show: true, product, weight: '' });
+                          } else {
+                            addToCart(product);
+                          }
+                        }}
                           className={`p-4 rounded-3xl flex justify-between items-center transition-all active:scale-95 border-2 
                                         ${inCart ? 'bg-blue-50 border-blue-500 shadow-sm' : 'bg-white border-transparent shadow-sm'}`}>
                           <div className="flex items-center gap-4">

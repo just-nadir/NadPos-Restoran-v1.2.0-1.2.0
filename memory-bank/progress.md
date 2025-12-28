@@ -23,6 +23,7 @@
     -   Column Types relaxed (UUID -> TEXT, TIMESTAMP -> TEXT) for compatibility.
     -   Foreign Key Constraints removed on Server for robust Sync.
 -   [x] **UI Bugs Fixed**: Shift "Already Open" after Sync resolved.
+-   [x] **Weighted Products**: Mahsulotlarni kg va dona da sotish imkoniyati qo'shildi (Waiter App + DB).
 
 
 

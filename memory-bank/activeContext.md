@@ -31,7 +31,11 @@ Hozirda asosiy e'tibor tizimning barqarorligini ta'minlash, VPS serverda ishlash
         -   Converted ID columns (`waiter_id`, `hall_id`, `customer_id`, etc.) to `TEXT` to accept `"0"` or legacy IDs.
         -   **Dropped Foreign Key Constraints** on server to allow syncing of data even if referenced entities are missing or have mismatching IDs. This ensures robust synchronization.
     -   **Missing Tables Created**: `order_items`, `debt_history`, `customer_debts`, `cancelled_orders`, `sms_logs` were manually created on VPS.
--   **UI Fix**: "Shift Already Open" error fixed by forcing `checkShift()` on Login in `GlobalContext`.
+    -   **UI Fix**: "Shift Already Open" error fixed by forcing `checkShift()` on Login in `GlobalContext`.
+    -   **Weighted Products Support**: 
+        -   Added `unit_type` ('item' | 'kg') to `products` table.
+        -   Implemented **Weight Input Modal** in Waiter App for 'kg' products.
+        -   Updated `useCart` to handle float quantities.
 
 
 

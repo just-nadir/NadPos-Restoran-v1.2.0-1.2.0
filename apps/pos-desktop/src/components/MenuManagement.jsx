@@ -12,33 +12,48 @@ const ProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct, ca
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nomi</label>
-            <input required type="text" value={newProduct.name || ''} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500" placeholder="Masalan: Qozon Kabob" autoFocus />
+            <input required type="text" value={newProduct.name || ''} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500" placeholder="Masalan: Qozon Kabob" autoFocus />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Narxi</label>
-            <input required type="number" value={newProduct.price || ''} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500" placeholder="0" />
+            <input required type="number" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500" placeholder="0" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Kategoriya</label>
-            <select value={newProduct.category_id || ''} onChange={e => setNewProduct({...newProduct, category_id: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500">
+            <select value={newProduct.category_id || ''} onChange={e => setNewProduct({ ...newProduct, category_id: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500">
               <option value="">Tanlang</option>
               {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
             </select>
           </div>
-          
+
           {/* OSHXONA TANLASH */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Qayerda tayyorlanadi?</label>
             <div className="grid grid-cols-3 gap-2">
               {/* Oshxonalar bo'sh bo'lsa xato bermasligi uchun tekshiruv */}
               {kitchens && kitchens.length > 0 ? kitchens.map((k) => (
-                <button key={k.id} type="button" onClick={() => setNewProduct({...newProduct, destination: String(k.id)})}
+                <button key={k.id} type="button" onClick={() => setNewProduct({ ...newProduct, destination: String(k.id) })}
                   className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all 
                     ${newProduct.destination === String(k.id) ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
                   <ChefHat size={20} />
                   <span className="text-xs font-bold capitalize truncate w-full text-center">{k.name}</span>
                 </button>
               )) : <p className="text-xs text-gray-400 col-span-3 text-center">Oshxonalar mavjud emas. Sozlamalardan qo'shing.</p>}
+            </div>
+          </div>
+
+          {/* UNIT TYPE TANLASH */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">O'lchov birligi</label>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setNewProduct({ ...newProduct, unit_type: 'item' })}
+                className={`flex-1 p-3 rounded-xl border font-bold transition-all ${newProduct.unit_type !== 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                Dona
+              </button>
+              <button type="button" onClick={() => setNewProduct({ ...newProduct, unit_type: 'kg' })}
+                className={`flex-1 p-3 rounded-xl border font-bold transition-all ${newProduct.unit_type === 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                Kg
+              </button>
             </div>
           </div>
 
@@ -54,11 +69,11 @@ const MenuManagement = () => {
   const [products, setProducts] = useState([]);
   const [kitchens, setKitchens] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
-  
+
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', category_id: '', destination: '1' });
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', category_id: '', destination: '1', unit_type: 'item' });
 
   // Kategoriya tahrirlash uchun
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -77,11 +92,11 @@ const MenuManagement = () => {
       const cats = await ipcRenderer.invoke('get-categories');
       const prods = await ipcRenderer.invoke('get-products');
       const kits = await ipcRenderer.invoke('get-kitchens');
-      
+
       setCategories(cats || []);
       setProducts(prods || []);
       setKitchens(kits || []);
-      
+
       if (!activeCategory && cats && cats.length > 0) setActiveCategory(cats[0].id);
     } catch (err) { console.error(err); }
   };
@@ -125,13 +140,13 @@ const MenuManagement = () => {
     try {
       const { ipcRenderer } = window.electron;
       await ipcRenderer.invoke('delete-category', confirmCategoryDelete.id);
-      
+
       // Agar o'chirilayotgan kategoriya active bo'lsa, boshqa kategoriyaga o'tkazish
       if (activeCategory === confirmCategoryDelete.id) {
         const remaining = categories.filter(c => c.id !== confirmCategoryDelete.id);
         setActiveCategory(remaining.length > 0 ? remaining[0].id : null);
       }
-      
+
       loadData();
     } catch (err) { console.error(err); }
   };
@@ -143,11 +158,11 @@ const MenuManagement = () => {
       await ipcRenderer.invoke('add-product', { ...newProduct, price: Number(newProduct.price), category_id: Number(newProduct.category_id) || activeCategory });
       setIsModalOpen(false);
       // Reset qilish
-      setNewProduct({ name: '', price: '', category_id: '', destination: '1' });
+      setNewProduct({ name: '', price: '', category_id: '', destination: '1', unit_type: 'item' });
       loadData();
     } catch (err) { console.error(err); }
   };
-  
+
   const toggleStatus = async (id, status) => {
     const { ipcRenderer } = window.electron;
     await ipcRenderer.invoke('toggle-product-status', { id, status: status ? 0 : 1 });
@@ -163,7 +178,7 @@ const MenuManagement = () => {
       const { ipcRenderer } = window.electron;
       await ipcRenderer.invoke('delete-product', confirmModal.id);
       loadData();
-    } catch(err) { console.error(err); }
+    } catch (err) { console.error(err); }
   };
 
   const filteredProducts = products.filter(p => p.category_id === activeCategory);
@@ -176,7 +191,7 @@ const MenuManagement = () => {
           <h2 className="text-xl font-bold text-gray-800">Kategoriyalar</h2>
           <button onClick={() => setIsAddingCategory(true)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"><Plus size={20} /></button>
         </div>
-        
+
         {isAddingCategory && (
           <form onSubmit={handleAddCategory} className="p-4 bg-gray-50 border-b border-gray-100 animate-in slide-in-from-top">
             <input autoFocus type="text" placeholder="Nomi..." value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="w-full p-2 rounded-lg border border-gray-300 mb-2 text-sm" />
@@ -193,24 +208,24 @@ const MenuManagement = () => {
               {editingCategoryId === cat.id ? (
                 // Tahrirlash rejimi
                 <form onSubmit={handleUpdateCategory} className="w-full bg-blue-50 px-3 py-2 rounded-xl border border-blue-300 animate-in slide-in-from-top">
-                  <input 
-                    autoFocus 
-                    type="text" 
-                    value={editCategoryName} 
-                    onChange={(e) => setEditCategoryName(e.target.value)} 
+                  <input
+                    autoFocus
+                    type="text"
+                    value={editCategoryName}
+                    onChange={(e) => setEditCategoryName(e.target.value)}
                     className="w-full p-2 rounded-lg border border-gray-300 mb-2 text-sm"
                     placeholder="Kategoriya nomi"
                   />
                   <div className="flex gap-2">
-                    <button 
-                      type="button" 
-                      onClick={() => setEditingCategoryId(null)} 
+                    <button
+                      type="button"
+                      onClick={() => setEditingCategoryId(null)}
                       className="text-xs text-gray-500 py-1 flex-1"
                     >
                       Bekor
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="text-xs bg-blue-600 text-white py-1 rounded-md flex-1"
                     >
                       Saqlash
@@ -219,12 +234,12 @@ const MenuManagement = () => {
                 </form>
               ) : (
                 // Oddiy ko'rinish
-                <div 
+                <div
                   onClick={() => setActiveCategory(cat.id)}
                   className={`w-full px-4 py-3 rounded-xl font-medium transition-all cursor-pointer flex items-center justify-between ${activeCategory === cat.id ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
                 >
                   <span className="flex-1 text-left truncate">{cat.name}</span>
-                  
+
                   {/* Tahrirlash va O'chirish tugmalari */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
@@ -270,12 +285,15 @@ const MenuManagement = () => {
               <div key={product.id} className={`bg-white p-4 rounded-2xl shadow-sm border-2 transition-all relative group ${product.is_active ? 'border-transparent hover:border-blue-400' : 'border-gray-200 opacity-60'}`}>
                 <div className="flex justify-between items-start mb-2">
                   <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs font-bold text-gray-500 uppercase truncate max-w-[100px]">
-                    {product.kitchen_name || 'Aniqlanmagan'} 
+                    {product.kitchen_name || 'Aniqlanmagan'}
                   </span>
                   <button onClick={() => toggleStatus(product.id, product.is_active)} className={`p-1.5 rounded-full ${product.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-200'}`}><Power size={16} /></button>
                 </div>
                 <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{product.name}</h3>
-                <p className="text-blue-600 font-bold">{product.price.toLocaleString()} so'm</p>
+                <p className="text-blue-600 font-bold">
+                  {product.price.toLocaleString()} so'm
+                  {product.unit_type === 'kg' && <span className="text-xs text-orange-500 ml-1 font-black">(KG)</span>}
+                </p>
                 <button onClick={() => confirmDelete(product.id)} className="absolute bottom-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={18} /></button>
               </div>
             ))}
@@ -284,9 +302,9 @@ const MenuManagement = () => {
       </div>
 
       <ProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddProduct} newProduct={newProduct} setNewProduct={setNewProduct} categories={categories} kitchens={kitchens} />
-      
+
       {/* Mahsulot o'chirish tasdiqlash */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={performDelete}
@@ -294,7 +312,7 @@ const MenuManagement = () => {
       />
 
       {/* Kategoriya o'chirish tasdiqlash */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={confirmCategoryDelete.isOpen}
         onClose={() => setConfirmCategoryDelete({ ...confirmCategoryDelete, isOpen: false })}
         onConfirm={performDeleteCategory}
