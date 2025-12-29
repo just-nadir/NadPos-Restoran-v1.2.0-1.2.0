@@ -82,6 +82,11 @@ function registerIpcHandlers(ipcMain) {
         return orderController.cancelOrder(tableId);
     });
 
+    // YANGI: Alohida mahsulotni o'chirish
+    ipcMain.handle('remove-order-item', async (e, itemId) => {
+        return orderController.removeItem(itemId);
+    });
+
     // Hisobotlar uchun
     ipcMain.handle('get-sales', (e, { startDate, endDate }) => orderController.getSales(startDate, endDate));
     ipcMain.handle('get-sales-trend', () => orderController.getSalesTrend()); // YANGI

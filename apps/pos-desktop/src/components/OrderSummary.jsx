@@ -9,6 +9,7 @@ const OrderSummary = ({ table, onDeselect }) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [bonusToUse, setBonusToUse] = useState(0);
   const [orderItems, setOrderItems] = useState([]);
@@ -140,6 +141,26 @@ const OrderSummary = ({ table, onDeselect }) => {
       showToast('error', `Xato: ${error.message}`);
     } finally {
       setPrintingCheck(false);
+    }
+  };
+
+  const handleRemoveItem = (item) => {
+    setItemToDelete(item);
+  };
+
+  const confirmRemoveItem = async () => {
+    if (!itemToDelete || !window.electron) return;
+    try {
+      const { ipcRenderer } = window.electron;
+      const result = await ipcRenderer.invoke('remove-order-item', itemToDelete.id);
+      if (result.success) {
+        showToast('success', 'Mahsulot o\'chirildi');
+        loadOrderItems(table.id);
+      }
+      setItemToDelete(null);
+    } catch (error) {
+      console.error("Remove item error:", error);
+      showToast('error', "Xatolik: " + error.message);
     }
   };
 
@@ -385,12 +406,21 @@ const OrderSummary = ({ table, onDeselect }) => {
           {loading ? <div className="text-center mt-10 text-gray-400">Yuklanmoqda...</div> :
             orderItems.length === 0 ? <div className="text-center mt-10 text-gray-400">Buyurtmalar yo'q</div> :
               orderItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-center py-3 border-b border-dashed border-gray-200 last:border-0">
+                <div key={index} className="flex justify-between items-center py-3 border-b border-dashed border-gray-200 last:border-0 group">
                   <div>
                     <p className="font-medium text-gray-800">{item.product_name}</p>
                     <p className="text-xs text-gray-400">{item.price.toLocaleString()} x {item.quantity}</p>
                   </div>
-                  <p className="font-bold text-gray-700">{(item.price * item.quantity).toLocaleString()}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-gray-700">{(item.price * item.quantity).toLocaleString()}</p>
+                    <button
+                      onClick={() => handleRemoveItem(item)}
+                      className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="O'chirish"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
         </div>
@@ -464,6 +494,17 @@ const OrderSummary = ({ table, onDeselect }) => {
         message="Haqiqatan ham bu stol buyurtmasini butunlay o'chirib tashlamoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
         confirmText="Ha, o'chirish"
         cancelText="Yo'q, qolsin"
+        isDanger={true}
+      />
+
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmRemoveItem}
+        title="Mahsulotni o'chirish"
+        message={`Haqiqatan ham "${itemToDelete?.product_name}" ni buyurtmadan o'chirmoqchimisiz?`}
+        confirmText="Ha, o'chirish"
+        cancelText="Bekor qilish"
         isDanger={true}
       />
     </>

@@ -425,5 +425,54 @@ module.exports = {
             log.error("getSalesTrend xatosi:", err);
             return [];
         }
+    },
+
+    removeItem: (itemId) => {
+        try {
+            const removeTransaction = db.transaction(() => {
+                // 1. Mahsulotni topish
+                const item = db.prepare('SELECT * FROM order_items WHERE id = ?').get(itemId);
+                if (!item) throw new Error("Mahsulot topilmadi");
+
+                const tableId = item.table_id;
+                const price = item.price;
+                const quantity = item.quantity;
+                const totalItemPrice = price * quantity;
+
+                // 2. O'chirish
+                db.prepare('DELETE FROM order_items WHERE id = ?').run(itemId);
+
+                // 3. Stol summasini yangilash
+                const currentTable = db.prepare('SELECT total_amount, waiter_name, waiter_id, status FROM tables WHERE id = ?').get(tableId);
+                let newTotal = (currentTable ? currentTable.total_amount : 0) - totalItemPrice;
+                if (newTotal < 0) newTotal = 0;
+
+                // Agar stolda hech narsa qolmasa, uni update qilish kerakmi?
+                // Hozircha faqat summani kamaytiramiz. Agar 0 bo'lsa ham stol "occupied" qolaveradi,
+                // toki ofitsiant o'zi bo'shatmaguncha yoki to'lov qilmaguncha.
+                // Lekin agar items_count 0 bo'lsa, statusni 'free' qilsak ham bo'ladi.
+
+                const remainingItems = db.prepare('SELECT count(*) as count FROM order_items WHERE table_id = ?').get(tableId).count;
+
+                if (remainingItems === 0) {
+                    db.prepare(`UPDATE tables SET total_amount = 0, status = 'free', guests = 0, start_time = NULL, current_check_number = 0, waiter_id = 0, waiter_name = NULL WHERE id = ?`).run(tableId);
+                } else {
+                    db.prepare(`UPDATE tables SET total_amount = ? WHERE id = ?`).run(newTotal, tableId);
+                }
+
+                return { tableId };
+            });
+
+            const { tableId } = removeTransaction();
+
+            notify('tables', null);
+            notify('table-items', tableId);
+            log.info(`Mahsulot o'chirildi: ${itemId}`);
+            return { success: true };
+
+        } catch (err) {
+            log.error("removeItem xatosi:", err);
+            throw err;
+        }
     }
 };
