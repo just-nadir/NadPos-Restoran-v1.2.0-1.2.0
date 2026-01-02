@@ -2,6 +2,24 @@ const { BrowserWindow } = require('electron');
 const { db } = require('../database.cjs');
 const log = require('electron-log');
 
+// Date Formatter (Uzbekistan Format: DD.MM.YYYY HH:mm)
+function formatDateTime(date = new Date()) {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
+
+function formatTime(date = new Date()) {
+    const d = new Date(date);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
 // Sozlamalarni olish
 function getSettings() {
     try {
@@ -168,7 +186,7 @@ module.exports = {
             </div>
             <div class="flex">
                 <span>Sana:</span>
-                <span>${new Date().toLocaleString('uz-UZ')}</span>
+                <span>${formatDateTime()}</span>
             </div>
             <div class="flex">
                 <span>Stol:</span>
@@ -271,7 +289,7 @@ module.exports = {
             </div>
             <div class="flex">
                 <span>Sana:</span>
-                <span>${new Date().toLocaleString('uz-UZ')}</span>
+                <span>${formatDateTime()}</span>
             </div>
             <div class="flex">
                 <span>Stol:</span>
@@ -408,7 +426,7 @@ module.exports = {
                     </div>
                     <div class="flex">
                         <span>Vaqt:</span>
-                        <span>${new Date().toLocaleTimeString('uz-UZ')}</span>
+                        <span>${formatTime()}</span>
                     </div>
 
                     <div class="line"></div>
@@ -470,11 +488,11 @@ module.exports = {
             </div>
             <div class="flex">
                 <span>Boshlandi:</span>
-                <span>${new Date(shiftReport.startTime).toLocaleString()}</span>
+                <span>${formatDateTime(shiftReport.startTime)}</span>
             </div>
             <div class="flex">
                 <span>Tugadi:</span>
-                <span>${new Date(shiftReport.endTime).toLocaleString()}</span>
+                <span>${formatDateTime(shiftReport.endTime)}</span>
             </div>
 
             <div class="line"></div>
@@ -538,7 +556,7 @@ module.exports = {
             </div>
 
             <div class="text-center footer-msg">
-                ${new Date().toLocaleString()}
+                ${formatDateTime()}
             </div>
         `;
 

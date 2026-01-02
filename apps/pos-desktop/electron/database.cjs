@@ -193,6 +193,7 @@ function createV2Tables() {
     db.prepare(`CREATE TABLE IF NOT EXISTS debt_history (
         id TEXT PRIMARY KEY,
         customer_id TEXT,
+        sale_id TEXT, -- Linked Sale
         amount REAL,
         type TEXT,
         date TEXT,
@@ -200,6 +201,11 @@ function createV2Tables() {
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE CASCADE
     )`).run();
+
+    // Hotfix: Add sale_id if missing
+    try {
+        db.prepare("ALTER TABLE debt_history ADD COLUMN sale_id TEXT").run();
+    } catch (e) { /* Column likely exists */ }
 
     db.prepare(`CREATE TABLE IF NOT EXISTS customer_debts (
         id TEXT PRIMARY KEY,
@@ -306,6 +312,7 @@ function createV2Tables() {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_sales_customer ON sales(customer_id)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_sale_items_sale ON sale_items(sale_id)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_debt_history_customer ON debt_history(customer_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_debt_history_sale ON debt_history(sale_id)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_customer_debts_status ON customer_debts(is_paid, due_date)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_sales_payment ON sales(payment_method)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_sales_waiter ON sales(waiter_name)`).run();

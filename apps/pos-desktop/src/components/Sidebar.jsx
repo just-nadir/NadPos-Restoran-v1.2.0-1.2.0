@@ -21,7 +21,6 @@ const Sidebar = ({ activePage, onNavigate, onLogout, user, onCloseShift, syncSta
     { id: 'menu', icon: <UtensilsCrossed />, label: "Menyu" },
     { id: 'tables', icon: <Square />, label: "Zallar" },
     { id: 'customers', icon: <Users />, label: "Mijozlar" },
-    { id: 'debtors', icon: <FileText />, label: "Qarzlar" },
     { id: 'reports', icon: <PieChart />, label: "Xisobot" },
     { id: 'marketing', icon: <MessageSquare />, label: "SMS" },
     { id: 'inventory', icon: <Package />, label: "Ombor" },
@@ -33,9 +32,9 @@ const Sidebar = ({ activePage, onNavigate, onLogout, user, onCloseShift, syncSta
     // Admin: Hammasi
     if (user?.role === 'admin') return true;
 
-    // Kassir: Faqat Kassa, Mijozlar, Qarzdorlar
+    // Kassir: Faqat Kassa, Mijozlar
     if (user?.role === 'cashier') {
-      return ['pos', 'customers', 'debtors'].includes(item.id);
+      return ['pos', 'customers'].includes(item.id);
     }
 
     return false;

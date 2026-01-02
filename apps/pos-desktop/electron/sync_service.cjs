@@ -113,7 +113,8 @@ async function pushChanges() {
         });
 
         if (!response.ok) {
-            throw new Error(`Cloud error: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            throw new Error(`Cloud error: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const result = await response.json();

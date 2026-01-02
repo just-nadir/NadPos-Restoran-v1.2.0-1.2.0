@@ -12,10 +12,10 @@ import PinLogin from './PinLogin';
 import ShiftModal from './ShiftModal'; // YANGI
 
 // --- OPTIMIZATSIYA: Dangasa Yuklash (Lazy Loading) ---
+// --- OPTIMIZATSIYA: Dangasa Yuklash (Lazy Loading) ---
 const MenuManagement = lazy(() => import('./MenuManagement'));
 const TablesManagement = lazy(() => import('./TablesManagement'));
 const CustomersManagement = lazy(() => import('./CustomersManagement'));
-const DebtorsManagement = lazy(() => import('./DebtorsManagement'));
 const Reports = lazy(() => import('./Reports'));
 const Settings = lazy(() => import('./Settings'));
 const Marketing = lazy(() => import('./Marketing'));
@@ -89,13 +89,13 @@ const DesktopLayout = () => {
   const renderContent = () => {
     // XAVFSIZLIK: Kassir cheklovi
     if (user.role === 'cashier') {
-      const allowed = ['pos', 'customers', 'debtors'];
+      const allowed = ['pos', 'customers'];
       if (!allowed.includes(activePage)) {
         return (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <ShieldAlert size={64} className="mb-4 text-orange-400" />
             <h2 className="text-2xl font-bold text-gray-700">Ruxsat yo'q</h2>
-            <p>Siz faqat Kassa, Mijozlar va Qarzdorlar bo'limiga kira olasiz.</p>
+            <p>Siz faqat Kassa va Mijozlar bo'limiga kira olasiz.</p>
           </div>
         );
       }
@@ -120,7 +120,6 @@ const DesktopLayout = () => {
             case 'menu': return <MenuManagement />;
             case 'tables': return <TablesManagement />;
             case 'customers': return <CustomersManagement />;
-            case 'debtors': return <DebtorsManagement />;
             case 'reports': return <Reports />;
             case 'marketing': return <Marketing />;
             case 'settings': return <Settings />;

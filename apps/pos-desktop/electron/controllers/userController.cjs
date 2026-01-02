@@ -12,6 +12,10 @@ module.exports = {
   },
 
   deleteCustomer: (id) => {
+    const customer = db.prepare("SELECT debt FROM customers WHERE id = ?").get(id);
+    if (customer && customer.debt > 0) {
+      throw new Error("Qarzdor mijozni o'chirib bo'lmaydi!");
+    }
     const res = db.prepare("UPDATE customers SET deleted_at = ?, is_synced = 0 WHERE id = ?").run(new Date().toISOString(), id);
     notify('customers', null);
     return res;
@@ -30,7 +34,13 @@ module.exports = {
     return db.prepare(query).all();
   },
 
-  getDebtHistory: (id) => db.prepare('SELECT * FROM debt_history WHERE customer_id = ? ORDER BY id DESC').all(id),
+  getDebtHistory: (id) => db.prepare(`
+    SELECT dh.*, s.check_number, s.items_json 
+    FROM debt_history dh 
+    LEFT JOIN sales s ON dh.sale_id = s.id 
+    WHERE dh.customer_id = ? 
+    ORDER BY dh.date DESC, dh.id DESC
+  `).all(id),
 
   payDebt: (customerId, amount, comment) => {
     const date = new Date().toISOString();

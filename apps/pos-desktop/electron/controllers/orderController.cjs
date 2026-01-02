@@ -54,13 +54,19 @@ module.exports = {
                 }
 
                 db.prepare(`UPDATE tables SET status = 'occupied', total_amount = ?, start_time = COALESCE(start_time, ?), waiter_name = ? WHERE id = ?`)
-                    .run(newTotal, new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), waiterName, tableId);
+                    .run(newTotal, new Date().toISOString(), waiterName, tableId);
             });
 
             const res = addItemTransaction(data);
             notify('tables', null);
             notify('table-items', data.tableId);
-            return res;
+
+            // Print Kitchen Ticket logic (similar to addBulkItems but for single item)
+            // Or just return checkNumber so frontend can handle it?
+            // User asked "desktopdan buyurtma berish funksiyasini yozganda chek id sini qo'shish tushib qolgan shekilli"
+            // It seems they want the check ID to be generated/returned properly.
+
+            return { ...res, checkNumber };
         } catch (err) {
             log.error("addItem xatosi:", err);
             throw err;
@@ -123,7 +129,8 @@ module.exports = {
 
                 const currentTable = db.prepare('SELECT total_amount, waiter_id, waiter_name, status FROM tables WHERE id = ?').get(tableId);
                 const newTotal = (currentTable ? currentTable.total_amount : 0) + additionalTotal;
-                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateFn = new Date();
+                const time = dateFn.toISOString();
 
                 const isOrphan = !currentTable.waiter_id || currentTable.waiter_id == 0;
                 const isUnknown = !currentTable.waiter_name || currentTable.waiter_name === "Noma'lum" || currentTable.waiter_name === "Kassir";
@@ -158,7 +165,7 @@ module.exports = {
                 }
             }, 100);
 
-            return validatedItems;
+            return { items: validatedItems, checkNumber };
         } catch (err) {
             log.error("addBulkItems xatosi:", err);
             throw err;
@@ -237,6 +244,11 @@ module.exports = {
 
                 const table = db.prepare('SELECT current_check_number, waiter_name, guests FROM tables WHERE id = ?').get(tableId);
                 checkNumber = table ? table.current_check_number : 0;
+
+                // Fix: Agar checkNumber 0 bo'lsa (masalan to'g'ridan-to'g'ri kassadan yopilganda), yangisini generatsiya qilamiz
+                if (!checkNumber || checkNumber === 0) {
+                    checkNumber = getOrCreateCheckNumber(tableId);
+                }
                 waiterName = table ? table.waiter_name : "Kassir";
                 guestCount = table ? table.guests : 0;
 
@@ -283,7 +295,7 @@ module.exports = {
                         const totalDebt = debtPayments.reduce((sum, p) => sum + p.amount, 0);
 
                         db.prepare('UPDATE customers SET debt = debt + ? WHERE id = ?').run(totalDebt, customerId);
-                        db.prepare('INSERT INTO debt_history (id, customer_id, amount, type, date, comment) VALUES (?, ?, ?, ?, ?, ?)').run(crypto.randomUUID(), customerId, totalDebt, 'debt', date, `Savdo #${checkNumber} (${waiterName}) - Split`);
+                        db.prepare('INSERT INTO debt_history (id, customer_id, sale_id, amount, type, date, comment) VALUES (?, ?, ?, ?, ?, ?, ?)').run(crypto.randomUUID(), customerId, saleId, totalDebt, 'debt', date, `Savdo #${checkNumber} (${waiterName}) - Split`);
 
                         // Insert each debt into customer_debts
                         debtPayments.forEach(debtPayment => {
@@ -293,7 +305,7 @@ module.exports = {
                 } else if (paymentMethod === 'debt' && customerId) {
                     // Original debt handling for single payment
                     db.prepare('UPDATE customers SET debt = debt + ? WHERE id = ?').run(total, customerId);
-                    db.prepare('INSERT INTO debt_history (id, customer_id, amount, type, date, comment) VALUES (?, ?, ?, ?, ?, ?)').run(crypto.randomUUID(), customerId, total, 'debt', date, `Savdo #${checkNumber} (${waiterName})`);
+                    db.prepare('INSERT INTO debt_history (id, customer_id, sale_id, amount, type, date, comment) VALUES (?, ?, ?, ?, ?, ?, ?)').run(crypto.randomUUID(), customerId, saleId, total, 'debt', date, `Savdo #${checkNumber} (${waiterName})`);
 
                     // YANGI: customer_debts jadvaliga qarz yozish
                     db.prepare('INSERT INTO customer_debts (id, customer_id, amount, due_date, is_paid, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(crypto.randomUUID(), customerId, total, dueDate, 0, date);
@@ -559,6 +571,20 @@ module.exports = {
 
         } catch (err) {
             log.error("returnItem xatosi:", err);
+            throw err;
+        }
+    },
+
+    getSaleDetails: (saleId) => {
+        try {
+            const sale = db.prepare('SELECT items_json, check_number, date, total_amount, waiter_name FROM sales WHERE id = ?').get(saleId);
+            if (!sale) return null;
+            return {
+                ...sale,
+                items: JSON.parse(sale.items_json || '[]')
+            };
+        } catch (err) {
+            log.error("getSaleDetails xatosi:", err);
             throw err;
         }
     }

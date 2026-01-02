@@ -191,7 +191,7 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
                       ? "bg-background text-primary border-transparent shadow-none"
                       : table.status === 'free' ? "bg-secondary text-muted-foreground border-transparent" : "bg-white dark:bg-slate-800 text-foreground"
                   )}>
-                    {table.name.replace(/\D/g, '') || <Hash size={20} />}
+                    {table.current_check_number > 0 ? `${table.current_check_number}` : (table.name.replace(/\D/g, '') || <Hash size={20} />)}
                   </div>
 
                   {/* Info */}
@@ -207,7 +207,7 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
                       {table.status !== 'free' && (
                         <>
                           <span className="opacity-50">•</span>
-                          <span className="flex items-center gap-1 font-mono"><Clock size={12} /> {table.start_time}</span>
+                          <span className="flex items-center gap-1 font-mono"><Clock size={12} /> {formatTime(table.start_time)}</span>
                         </>
                       )}
                     </div>
