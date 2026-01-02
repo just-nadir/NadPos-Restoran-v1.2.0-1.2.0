@@ -2,7 +2,7 @@ const { db, notify } = require('../database.cjs');
 const crypto = require('crypto');
 
 module.exports = {
-    getCategories: () => db.prepare('SELECT * FROM categories').all(),
+    getCategories: () => db.prepare('SELECT * FROM categories WHERE deleted_at IS NULL').all(),
 
     addCategory: (name) => {
         const id = crypto.randomUUID();

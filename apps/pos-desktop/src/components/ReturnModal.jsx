@@ -15,15 +15,34 @@ const ReturnModal = ({ isOpen, onClose, onConfirm, item }) => {
   if (!isOpen || !item) return null;
 
   const maxQuantity = item.quantity;
+
+  // Determine if item is by weight/decimal
+  // If unit_type is 'kg' or if quantity has decimals.
+  // Note: 'item' might not have unit_type if it comes from order_items table joins. 
+  // But checking if quantity is float is a good heuristic.
+  const isKg = item.unit_type === 'kg' || item.quantity % 1 !== 0;
+
   const isFullReturn = returnQuantity === maxQuantity;
 
   const handleIncrement = () => {
-    if (returnQuantity < maxQuantity) setReturnQuantity(prev => prev + 1);
+    if (returnQuantity < maxQuantity) {
+      setReturnQuantity(prev => {
+        const next = isKg ? parseFloat((prev + 0.1).toFixed(3)) : prev + 1;
+        return next > maxQuantity ? maxQuantity : next;
+      });
+    }
   };
 
   const handleDecrement = () => {
-    if (returnQuantity > 1) setReturnQuantity(prev => prev - 1);
+    if (returnQuantity > (isKg ? 0.001 : 1)) {
+      setReturnQuantity(prev => {
+        const next = isKg ? parseFloat((prev - 0.1).toFixed(3)) : prev - 1;
+        return next < 0 ? 0 : next;
+      });
+    }
   };
+
+  const remaining = parseFloat((maxQuantity - returnQuantity).toFixed(3));
 
   const handleConfirm = () => {
     onConfirm(item.id, returnQuantity, reason);
@@ -36,7 +55,7 @@ const ReturnModal = ({ isOpen, onClose, onConfirm, item }) => {
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
           <X size={24} />
         </button>
-        
+
         <div className="flex flex-col items-center mb-6">
           <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mb-3">
             <RefreshCcw size={24} />
@@ -54,21 +73,33 @@ const ReturnModal = ({ isOpen, onClose, onConfirm, item }) => {
                 Jami: {maxQuantity}
               </span>
             </div>
-            
+
             <div className="flex items-center justify-center gap-4">
-              <button 
+              <button
                 onClick={handleDecrement}
-                disabled={returnQuantity <= 1}
+                disabled={returnQuantity <= (isKg ? 0.001 : 1)}
                 className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
                 <Minus size={18} />
               </button>
-              
-              <div className="text-2xl font-bold text-gray-800 w-12 text-center">
-                {returnQuantity}
+
+              <div className="flex-1 max-w-[120px]">
+                <input
+                  type="number"
+                  step={isKg ? "0.001" : "1"}
+                  value={returnQuantity}
+                  onChange={(e) => {
+                    let val = parseFloat(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    if (val > maxQuantity) val = maxQuantity;
+                    if (val < 0) val = 0;
+                    setReturnQuantity(val);
+                  }}
+                  className="w-full text-center text-2xl font-bold text-gray-800 bg-transparent border-b border-gray-300 focus:border-orange-500 outline-none"
+                />
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleIncrement}
                 disabled={returnQuantity >= maxQuantity}
                 className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
@@ -78,9 +109,9 @@ const ReturnModal = ({ isOpen, onClose, onConfirm, item }) => {
             </div>
 
             <div className="text-center mt-3">
-               <span className={`text-sm font-bold ${isFullReturn ? 'text-red-500' : 'text-orange-500'}`}>
-                 {isFullReturn ? "To'liq o'chiriladi" : `${maxQuantity - returnQuantity} ta qoladi`}
-               </span>
+              <span className={`text-sm font-bold ${isFullReturn ? 'text-red-500' : 'text-orange-500'}`}>
+                {isFullReturn ? "To'liq o'chiriladi" : `${remaining} ta qoladi`}
+              </span>
             </div>
           </div>
 
@@ -98,13 +129,13 @@ const ReturnModal = ({ isOpen, onClose, onConfirm, item }) => {
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="flex-1 py-3 text-gray-600 font-bold hover:bg-gray-50 rounded-xl transition-colors border border-gray-200"
             >
               Bekor qilish
             </button>
-            <button 
+            <button
               onClick={handleConfirm}
               className={`flex-1 py-3 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95 ${isFullReturn ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-500 hover:bg-orange-600'}`}
             >

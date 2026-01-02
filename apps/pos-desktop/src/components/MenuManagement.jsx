@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Power, X, ChefHat, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Power, X, ChefHat, Edit2, Search, Package, MoreVertical } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import { cn } from '../utils/cn';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Badge } from './ui/badge';
 
 const ProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct, categories, kitchens }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
-      <div className="bg-white w-[500px] rounded-2xl shadow-2xl p-6 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24} /></button>
-        <h2 className="text-xl font-bold text-gray-800 mb-6">Yangi Taom</h2>
+      <div className="bg-background w-[500px] rounded-2xl shadow-2xl p-6 relative border border-border">
+        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-2"><X size={24} /></button>
+        <h2 className="text-2xl font-bold text-foreground mb-6">Yangi Taom</h2>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nomi</label>
-            <input required type="text" value={newProduct.name || ''} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500" placeholder="Masalan: Qozon Kabob" autoFocus />
+            <label className="block text-sm font-bold text-muted-foreground mb-2">Nomi</label>
+            <input required type="text" value={newProduct.name || ''} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full p-3 bg-secondary/50 rounded-xl border border-transparent focus:border-primary outline-none text-foreground font-medium transition-all" placeholder="Masalan: Qozon Kabob" autoFocus />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Narxi</label>
-            <input required type="number" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500" placeholder="0" />
+            <label className="block text-sm font-bold text-muted-foreground mb-2">Narxi</label>
+            <input required type="number" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} className="w-full p-3 bg-secondary/50 rounded-xl border border-transparent focus:border-primary outline-none text-foreground font-bold transition-all" placeholder="0" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kategoriya</label>
-            <select value={newProduct.category_id || ''} onChange={e => setNewProduct({ ...newProduct, category_id: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500">
+            <label className="block text-sm font-bold text-muted-foreground mb-2">Kategoriya</label>
+            <select value={newProduct.category_id || ''} onChange={e => setNewProduct({ ...newProduct, category_id: e.target.value })} className="w-full p-3 bg-secondary/50 rounded-xl border border-transparent focus:border-primary outline-none text-foreground font-medium">
               <option value="">Tanlang</option>
               {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
             </select>
@@ -28,36 +32,35 @@ const ProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct, ca
 
           {/* OSHXONA TANLASH */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Qayerda tayyorlanadi?</label>
+            <label className="block text-sm font-bold text-muted-foreground mb-2">Qayerda tayyorlanadi?</label>
             <div className="grid grid-cols-3 gap-2">
-              {/* Oshxonalar bo'sh bo'lsa xato bermasligi uchun tekshiruv */}
               {kitchens && kitchens.length > 0 ? kitchens.map((k) => (
                 <button key={k.id} type="button" onClick={() => setNewProduct({ ...newProduct, destination: String(k.id) })}
-                  className={`p - 3 rounded - xl border flex flex - col items - center justify - center gap - 1 transition - all 
-                    ${newProduct.destination === String(k.id) ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} `}>
+                  className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all h-20
+                    ${newProduct.destination === String(k.id) ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground hover:bg-secondary/50'} `}>
                   <ChefHat size={20} />
                   <span className="text-xs font-bold capitalize truncate w-full text-center">{k.name}</span>
                 </button>
-              )) : <p className="text-xs text-gray-400 col-span-3 text-center">Oshxonalar mavjud emas. Sozlamalardan qo'shing.</p>}
+              )) : <p className="text-xs text-muted-foreground col-span-3 text-center">Oshxonalar mavjud emas. Sozlamalardan qo'shing.</p>}
             </div>
           </div>
 
           {/* UNIT TYPE TANLASH */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">O'lchov birligi</label>
+            <label className="block text-sm font-bold text-muted-foreground mb-2">O'lchov birligi</label>
             <div className="flex gap-2">
               <button type="button" onClick={() => setNewProduct({ ...newProduct, unit_type: 'item' })}
-                className={`flex - 1 p - 3 rounded - xl border font - bold transition - all ${newProduct.unit_type !== 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'} `}>
+                className={`flex-1 p-3 rounded-xl border font-bold transition-all ${newProduct.unit_type !== 'kg' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border'} `}>
                 Dona
               </button>
               <button type="button" onClick={() => setNewProduct({ ...newProduct, unit_type: 'kg' })}
-                className={`flex - 1 p - 3 rounded - xl border font - bold transition - all ${newProduct.unit_type === 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'} `}>
+                className={`flex-1 p-3 rounded-xl border font-bold transition-all ${newProduct.unit_type === 'kg' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border'} `}>
                 Kg
               </button>
             </div>
           </div>
 
-          <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 mt-4">Saqlash</button>
+          <button type="submit" className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg hover:bg-primary/90 mt-6 text-lg">Saqlash</button>
         </form>
       </div>
     </div>
@@ -75,6 +78,8 @@ const MenuManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', price: '', category_id: '', destination: '1', unit_type: 'item' });
 
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Kategoriya tahrirlash uchun
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -182,23 +187,30 @@ const MenuManagement = () => {
     } catch (err) { console.error(err); }
   };
 
-  const filteredProducts = products.filter(p => p.category_id === activeCategory);
+  // Filter products by category and search query
+  const filteredProducts = products.filter(p => {
+    const catMatch = p.category_id === activeCategory;
+    const searchMatch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return catMatch && searchMatch;
+  });
 
   return (
-    <div className="flex w-full h-full relative">
+    <div className="flex w-full h-full relative bg-background">
       {/* SIDEBAR (Kategoriyalar) */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">Kategoriyalar</h2>
-          <button onClick={() => setIsAddingCategory(true)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"><Plus size={20} /></button>
+      <div className="w-80 bg-card border-r border-border flex flex-col h-full z-10">
+        <div className="p-6 border-b border-border flex justify-between items-center">
+          <h2 className="text-xl font-bold text-foreground">Kategoriyalar</h2>
+          <Button size="icon" variant="ghost" className="rounded-full hover:bg-secondary" onClick={() => setIsAddingCategory(true)}>
+            <Plus className="text-primary" />
+          </Button>
         </div>
 
         {isAddingCategory && (
-          <form onSubmit={handleAddCategory} className="p-4 bg-gray-50 border-b border-gray-100 animate-in slide-in-from-top">
-            <input autoFocus type="text" placeholder="Nomi..." value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="w-full p-2 rounded-lg border border-gray-300 mb-2 text-sm" />
+          <form onSubmit={handleAddCategory} className="p-4 bg-secondary/10 border-b border-border animate-in slide-in-from-top">
+            <input autoFocus type="text" placeholder="Nomi..." value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="w-full p-3 rounded-lg border border-border bg-background focus:border-primary outline-none mb-2 text-sm text-foreground" />
             <div className="flex gap-2">
-              <button type="button" onClick={() => setIsAddingCategory(false)} className="text-xs text-gray-500 py-1 flex-1">Bekor</button>
-              <button type="submit" className="text-xs bg-blue-600 text-white py-1 rounded-md flex-1">Qo'shish</button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddingCategory(false)} className="flex-1 text-muted-foreground">Bekor</Button>
+              <Button type="submit" size="sm" className="flex-1">Qo'shish</Button>
             </div>
           </form>
         )}
@@ -208,47 +220,41 @@ const MenuManagement = () => {
             <div key={cat.id} className="relative group">
               {editingCategoryId === cat.id ? (
                 // Tahrirlash rejimi
-                <form onSubmit={handleUpdateCategory} className="w-full bg-blue-50 px-3 py-2 rounded-xl border border-blue-300 animate-in slide-in-from-top">
+                <form onSubmit={handleUpdateCategory} className="w-full bg-secondary/30 px-3 py-2 rounded-xl border border-primary animate-in slide-in-from-top">
                   <input
                     autoFocus
                     type="text"
                     value={editCategoryName}
                     onChange={(e) => setEditCategoryName(e.target.value)}
-                    className="w-full p-2 rounded-lg border border-gray-300 mb-2 text-sm"
+                    className="w-full p-2 rounded-lg border border-border bg-background mb-2 text-sm text-foreground"
                     placeholder="Kategoriya nomi"
                   />
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingCategoryId(null)}
-                      className="text-xs text-gray-500 py-1 flex-1"
-                    >
-                      Bekor
-                    </button>
-                    <button
-                      type="submit"
-                      className="text-xs bg-blue-600 text-white py-1 rounded-md flex-1"
-                    >
-                      Saqlash
-                    </button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCategoryId(null)} className="flex-1 h-8">Bekor</Button>
+                    <Button type="submit" size="sm" className="flex-1 h-8">Saqlash</Button>
                   </div>
                 </form>
               ) : (
                 // Oddiy ko'rinish
                 <div
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`w - full px - 4 py - 3 rounded - xl font - medium transition - all cursor - pointer flex items - center justify - between ${activeCategory === cat.id ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'} `}
+                  className={cn(
+                    "w-full px-4 py-3 rounded-xl font-medium transition-all cursor-pointer flex items-center justify-between",
+                    activeCategory === cat.id
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  )}
                 >
                   <span className="flex-1 text-left truncate">{cat.name}</span>
 
                   {/* Tahrirlash va O'chirish tugmalari */}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className={cn("flex items-center gap-1 transition-opacity", activeCategory === cat.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         startEditCategory(cat);
                       }}
-                      className={`p - 1.5 rounded - md transition - colors ${activeCategory === cat.id ? 'hover:bg-blue-500' : 'hover:bg-gray-200'} `}
+                      className="p-1.5 rounded-md hover:bg-white/20 transition-colors"
                       title="Tahrirlash"
                     >
                       <Edit2 size={14} />
@@ -258,7 +264,7 @@ const MenuManagement = () => {
                         e.stopPropagation();
                         confirmDeleteCategory(cat.id);
                       }}
-                      className={`p - 1.5 rounded - md transition - colors ${activeCategory === cat.id ? 'hover:bg-red-500' : 'hover:bg-red-100 hover:text-red-600'} `}
+                      className="p-1.5 rounded-md hover:bg-red-500/80 transition-colors"
                       title="O'chirish"
                     >
                       <Trash2 size={14} />
@@ -271,42 +277,112 @@ const MenuManagement = () => {
         </div>
       </div>
 
-      {/* CONTENT (Mahsulotlar) */}
-      <div className="flex-1 bg-gray-50 flex flex-col h-full overflow-hidden">
-        <div className="bg-white px-8 py-4 border-b border-gray-200 flex justify-between items-center shadow-sm">
-          <h1 className="text-2xl font-bold text-gray-800">Menyu</h1>
-          <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 flex items-center gap-2">
-            <Plus size={20} /> Yangi Taom
-          </button>
+      {/* CONTENT (Mahsulotlar - List View) */}
+      <div className="flex-1 bg-background flex flex-col h-full overflow-hidden relative">
+        <div className="px-8 py-5 border-b border-border flex justify-between items-center bg-card shadow-sm z-20">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Menyu</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {products.filter(p => p.category_id === activeCategory).length} ta mahsulot
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <input
+                type="text"
+                placeholder="Qidirish..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-secondary/30 border border-transparent focus:border-primary rounded-lg outline-none text-foreground transition-all"
+              />
+            </div>
+            <Button onClick={() => setIsModalOpen(true)} size="lg" className="rounded-xl shadow-lg gap-2">
+              <Plus size={20} /> Yangi Taom
+            </Button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredProducts.map(product => (
-              <div key={product.id} className={`bg - white p - 4 rounded - 2xl shadow - sm border - 2 transition - all relative group ${product.is_active ? 'border-transparent hover:border-blue-400' : 'border-gray-200 opacity-60'} `}>
-                <div className="flex justify-between items-start mb-2">
-                  <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs font-bold text-gray-500 uppercase truncate max-w-[100px]">
-                    {product.kitchen_name || 'Aniqlanmagan'}
-                  </span>
-                  <div className="flex gap-1">
-                    <button onClick={() => toggleStatus(product.id, product.is_active)} className={`p-1.5 rounded-full ${product.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-200'}`}><Power size={16} /></button>
+        <div className="flex-1 overflow-y-auto p-0 pb-20">
+          {filteredProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50">
+              <Package size={64} className="mb-4" strokeWidth={1} />
+              <p className="text-xl">Mahsulotlar topilmadi</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {/* Table Header (Desktop only ideally, but keeping it simple) */}
+              <div className="grid grid-cols-12 gap-4 px-8 py-3 bg-secondary/20 text-xs font-bold text-muted-foreground uppercase tracking-wider sticky top-0 backdrop-blur-md z-10">
+                <div className="col-span-3">Nomi</div>
+                <div className="col-span-2">Narxi</div>
+                <div className="col-span-2">Qoldiq</div>
+                <div className="col-span-2">Oshxona</div>
+                <div className="col-span-2">Holati</div>
+                <div className="col-span-1 text-right">Amallar</div>
+              </div>
+
+              {filteredProducts.map(product => (
+                <div key={product.id} className="grid grid-cols-12 gap-4 px-8 py-4 items-center hover:bg-secondary/10 transition-colors group">
+
+                  {/* Name & Code */}
+                  <div className="col-span-3 flex items-center gap-2">
+                    <h3 className={cn("font-bold text-lg text-foreground truncate", !product.is_active && "text-muted-foreground line-through")}>{product.name}</h3>
+                    {product.unit_type === 'kg' && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900 shrink-0">KG</Badge>}
+                  </div>
+
+                  {/* Price */}
+                  <div className="col-span-2">
+                    <div className="font-bold text-primary text-base">
+                      {product.price.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">so'm</span>
+                    </div>
+                  </div>
+
+                  {/* Stock (Qoldiq) */}
+                  <div className="col-span-2">
+                    <div className={cn("font-bold text-base flex items-center gap-1", product.stock <= 5 ? "text-red-500" : "text-foreground")}>
+                      {product.stock || 0} <span className="text-xs text-muted-foreground font-normal">{product.unit_type === 'kg' ? 'kg' : 'dona'}</span>
+                    </div>
+                  </div>
+
+                  {/* Kitchen */}
+                  <div className="col-span-2">
+                    <span className="text-sm text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md truncate block w-fit max-w-full">
+                      {product.kitchen_name || '-'}
+                    </span>
+                  </div>
+
+                  {/* Active Toggle */}
+                  <div className="col-span-2">
+                    <button
+                      onClick={() => toggleStatus(product.id, product.is_active)}
+                      className={cn(
+                        "relative w-12 h-7 rounded-full transition-colors flex items-center px-1",
+                        product.is_active ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-5 h-5 bg-white rounded-full shadow-md transform transition-transform",
+                        product.is_active ? "translate-x-5" : "translate-x-0"
+                      )} />
+                    </button>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="col-span-1 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10 rounded-full"
+                      onClick={() => confirmDelete(product.id)}
+                    >
+                      <Trash2 size={20} />
+                    </Button>
                   </div>
                 </div>
-                <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{product.name}</h3>
-                <p className="text-blue-600 font-bold flex justify-between items-center">
-                  <span>{product.price.toLocaleString()} so'm</span>
-                  {product.unit_type === 'kg' && <span className="text-xs text-orange-500 font-black">(KG)</span>}
-                </p>
-
-                {/* SKLAD (Stock) Display */}
-                <div className={`mt - 2 text - xs font - medium py - 1 px - 2 rounded - lg inline - block ${product.stock <= 5 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'} `}>
-                  Qoldiq: <span className="font-bold">{product.stock || 0}</span> {product.unit_type === 'kg' ? 'kg' : 'dona'}
-                </div>
-
-                <button onClick={() => confirmDelete(product.id)} className="absolute bottom-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={18} /></button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

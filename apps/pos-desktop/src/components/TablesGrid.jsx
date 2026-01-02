@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Users, Clock, Receipt, Hash, User, Search
+  Users, Clock, Receipt, Hash, User, Search, ArrowRight
 } from 'lucide-react';
 import { useIpcListener } from '../hooks/useIpcListener';
 import { useGlobal } from '../context/GlobalContext';
@@ -11,14 +11,21 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 
 /* ... Imports remain ... */
+/* ... Imports remain ... */
+import MenuModal from './MenuModal';
+
+
+// --- NEW ORDER MODAL ---
+
 
 const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selectedTableId prop
   const [tables, setTables] = useState([]);
   const [halls, setHalls] = useState([]);
   const [activeHallId, setActiveHallId] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showFree, setShowFree] = useState(false);
+  // Modal State
+  const [menuModal, setMenuModal] = useState({ isOpen: false, table: null });
 
   const { settings } = useGlobal();
 
@@ -51,19 +58,11 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
   });
 
   const filteredTables = tables.filter(table => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = table.name.toLowerCase().includes(searchLower) ||
-      (table.current_check_number && table.current_check_number.toString().includes(searchLower));
     const isHallMatch = activeHallId === 'all' || table.hall_id === activeHallId;
-    const isActiveStatus = showFree || table.status !== 'free';
-    // User requested "Active Tables" on left. So yes, filter by status logic implies showing what's relevant. 
-    // But usually we want to see ALL tables to select a free one. 
-    // Prompt says "Chap tomonda AKTIV STOLLAR". Let's stick to showing ALL, but sorting active first maybe?
-    // Wait, if I only show active, how do I open a new table?
-    // Let's show ALL for now, but style them clearly. The user said "Aktiv stollar", but strictly hiding free tables prevents new orders.
-    // I will show ALL, but group or sort them. Let's keep filter as is for now but maybe sort.
+    const isActiveStatus = showFree ? table.status === 'free' : table.status !== 'free';
+
     console.log(`Table: ${table.name}, Status: ${table.status}, ShowFree: ${showFree}, SafeActive: ${isActiveStatus}`);
-    return isHallMatch && matchesSearch && isActiveStatus;
+    return isHallMatch && isActiveStatus;
   });
 
   // Sort: Occupied first
@@ -72,24 +71,46 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
     return statusOrder[a.status] - statusOrder[b.status];
   });
 
-
   /* ... Helper functions ... */
+
+  const handleTableClick = (table) => {
+    onSelectTable(table);
+  };
+
+  const handleTableDoubleClick = (table) => {
+    // Agar stol bo'sh bo'lsa yoki band bo'lsa (qo'shimcha buyurtma uchun)
+    if (table.status === 'free' || table.status === 'occupied') {
+      setMenuModal({ isOpen: true, table });
+    }
+  };
+
+  const handleMenuClose = () => {
+    setMenuModal({ isOpen: false, table: null });
+    if (menuModal.table) {
+      // Try to select it after closing if it became occupied
+      onSelectTable(menuModal.table);
+      // Note: table status in 'menuModal.table' is stale ('free'), 
+      // but onSelectTable just takes ID/Object. 
+      // Ideally we fetch fresh data, but Global Listener handles that.
+    }
+  };
+
   const getStatusColor = (status, isSelected) => {
-    if (isSelected) return 'bg-primary text-primary-foreground border-primary ring-2 ring-primary ring-offset-2';
+    if (isSelected) return 'bg-primary text-primary-foreground border-primary ring-2 ring-primary ring-offset-2 ring-offset-background';
     switch (status) {
-      case 'occupied': return 'bg-blue-50/50 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/10 dark:border-blue-800';
-      case 'payment': return 'bg-yellow-50/50 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/10 dark:border-yellow-800';
-      case 'reserved': return 'bg-purple-50/50 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/10 dark:border-purple-800';
-      case 'free': return 'bg-card border-border hover:bg-secondary/50';
+      case 'occupied': return 'bg-blue-50/50 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/40 dark:border-blue-800 dark:hover:bg-blue-900/50';
+      case 'payment': return 'bg-yellow-50/50 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-950/40 dark:border-yellow-800 dark:hover:bg-yellow-900/50';
+      case 'reserved': return 'bg-purple-50/50 border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:border-purple-800 dark:hover:bg-purple-900/50';
+      case 'free': return 'bg-card border-border hover:bg-secondary/50 dark:hover:bg-secondary/20';
       default: return 'bg-card';
     }
   };
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'occupied': return <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">BAND</Badge>;
-      case 'payment': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">TO'LOV</Badge>;
-      case 'reserved': return <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">BAND QILINGAN</Badge>;
+      case 'occupied': return <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">BAND</Badge>;
+      case 'payment': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200">TO'LOV</Badge>;
+      case 'reserved': return <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200">BAND QILINGAN</Badge>;
       case 'free': return <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30">BO'SH</Badge>;
       default: return null;
     }
@@ -136,16 +157,7 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
           ))}
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <Input
-            type="text"
-            placeholder="Stol qidirish..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 w-full"
-          />
-        </div>
+
       </div>
 
       {/* LIST VIEW */}
@@ -157,7 +169,8 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
             return (
               <div
                 key={table.id}
-                onClick={() => onSelectTable(table)}
+                onClick={() => handleTableClick(table)}
+                onDoubleClick={() => handleTableDoubleClick(table)}
                 className={cn(
                   "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer select-none",
                   getStatusColor(table.status, isSelected),
@@ -169,8 +182,8 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
                   <div className={cn(
                     "w-12 h-12 rounded-full flex items-center justify-center font-black text-lg shadow-sm border",
                     isSelected
-                      ? "bg-background text-primary border-transparent"
-                      : table.status === 'free' ? "bg-secondary text-muted-foreground border-transparent" : "bg-white text-foreground"
+                      ? "bg-background text-primary border-transparent shadow-none"
+                      : table.status === 'free' ? "bg-secondary text-muted-foreground border-transparent" : "bg-white dark:bg-slate-800 text-foreground"
                   )}>
                     {table.name.replace(/\D/g, '') || <Hash size={20} />}
                   </div>
@@ -222,6 +235,14 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
           )}
         </div>
       </div>
+
+
+      <MenuModal
+        isOpen={menuModal.isOpen}
+        onClose={handleMenuClose}
+        tableId={menuModal.table?.id}
+        tableName={menuModal.table?.name}
+      />
     </div>
   );
 };

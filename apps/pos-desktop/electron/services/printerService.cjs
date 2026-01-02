@@ -544,5 +544,19 @@ module.exports = {
 
         const fullHtml = createHtmlTemplate(content);
         await printHtml(fullHtml, printerName);
+    },
+
+    // 5. System Printers (Settings uchun)
+    getPrinters: async () => {
+        const win = new BrowserWindow({ show: false, width: 100, height: 100 });
+        try {
+            const printers = await win.webContents.getPrintersAsync();
+            return printers;
+        } catch (e) {
+            console.error("Printerlarni olishda xato:", e);
+            return [];
+        } finally {
+            win.destroy();
+        }
     }
 };

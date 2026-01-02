@@ -302,7 +302,8 @@ const OrderSummary = ({ table, onDeselect }) => {
         {/* HEADER */}
         <div className={cn(
           "p-6 border-b border-border transition-colors",
-          table.status === 'payment' ? 'bg-yellow-50 dark:bg-yellow-900/10' : 'bg-secondary/30'
+          table.status === 'payment' ? 'bg-yellow-50 dark:bg-yellow-950/30' :
+            table.status === 'free' ? 'bg-green-50 dark:bg-green-950/30' : 'bg-secondary/30 dark:bg-secondary/10'
         )}>
           <div className="flex justify-between items-center mb-1">
             <h2 className="text-2xl font-bold text-foreground">{table.name}</h2>
@@ -314,18 +315,21 @@ const OrderSummary = ({ table, onDeselect }) => {
                 <span className="font-black text-lg text-foreground">{table.current_check_number}</span>
               </div>
             )}
+            {table.status === 'free' && (
+              <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/50 px-3 py-1 rounded-full border border-green-200 dark:border-green-800">
+                <span className="font-bold text-xs text-green-700 dark:text-green-300">YANGI BUYURTMA</span>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between items-center mt-2">
-            {settings.serviceChargeType === 'fixed' && (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Users size={14} /> <span>{guestsCount} mehmon</span>
-              </div>
-            )}
             {settings.serviceChargeType !== 'fixed' && <div></div>}
-            <Badge variant={table.status === 'occupied' ? 'default' : 'secondary'} className={table.status === 'occupied' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30'}>
-              {table.status === 'occupied' ? 'Band' : 'To\'lov'}
-            </Badge>
+
+            {table.status !== 'free' && (
+              <Badge variant={table.status === 'occupied' ? 'default' : 'secondary'} className={table.status === 'occupied' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800'}>
+                {table.status === 'occupied' ? 'Band' : 'To\'lov'}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -414,21 +418,43 @@ const OrderSummary = ({ table, onDeselect }) => {
         {/* ITEMS */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
           {loading ? <div className="text-center mt-10 text-muted-foreground">Yuklanmoqda...</div> :
-            orderItems.length === 0 ? <div className="text-center mt-10 text-muted-foreground">Buyurtmalar yo'q</div> :
+            orderItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground opacity-50">
+                <PlusCircle size={48} strokeWidth={1} className="mb-2" />
+                <p>Buyurtma qo'shish uchun mahsulot tanlang</p>
+              </div>
+            ) :
               orderItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-center py-3 border-b border-dashed border-border last:border-0 group">
-                  <div>
-                    <p className="font-medium text-foreground">{item.product_name}</p>
-                    <p className="text-xs text-muted-foreground">{item.price.toLocaleString()} x {item.quantity}</p>
+                <div key={index} className="grid grid-cols-12 items-center gap-2 py-4 border-b border-dashed border-border last:border-0 group">
+                  {/* Name */}
+                  <div className="col-span-5 pr-2">
+                    <p className="font-bold text-base text-foreground truncate" title={item.product_name}>
+                      {item.product_name}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className="font-bold text-foreground">{(item.price * item.quantity).toLocaleString()}</p>
+
+                  {/* Qty x Price */}
+                  <div className="col-span-4 text-right">
+                    <div className="text-sm font-medium text-muted-foreground whitespace-nowrap bg-secondary/30 px-2 py-1 rounded-md inline-block">
+                      <span className="text-foreground font-bold">{item.quantity}x</span> {item.price.toLocaleString()}
+                    </div>
+                  </div>
+
+                  {/* Total */}
+                  <div className="col-span-2 text-right">
+                    <p className="font-bold text-base text-foreground truncate">
+                      {(item.price * item.quantity).toLocaleString()}
+                    </p>
+                  </div>
+
+                  {/* Delete Button */}
+                  <div className="col-span-1 flex justify-end">
                     <button
                       onClick={() => handleRemoveItem(item)}
-                      className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      className="w-10 h-10 flex items-center justify-center text-destructive/70 hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
                       title="O'chirish"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={20} />
                     </button>
                   </div>
                 </div>

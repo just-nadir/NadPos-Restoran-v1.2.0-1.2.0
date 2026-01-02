@@ -11,6 +11,7 @@ const staffController = require('./controllers/staffController.cjs');
 const userController = require('./controllers/userController.cjs'); // Customers & Debtors
 const smsController = require('./controllers/smsController.cjs');   // SMS Marketing
 const inventoryController = require('./controllers/inventoryController.cjs'); // YANGI
+const printerService = require('./services/printerService.cjs');
 // const licenseController = require('./controllers/licenseController.cjs'); // License System (REMOVED)
 
 
@@ -76,6 +77,9 @@ function registerIpcHandlers(ipcMain) {
     // Agar OrderSummary da 'add-order-item' ishlatilayotgan bo'lsa:
     ipcMain.handle('add-order-item', (e, item) => orderController.addItem(item));
 
+    // YANGI: Bulk Items (Waiter App logikasi kabi)
+    ipcMain.handle('add-bulk-items', (e, { tableId, items, waiterId }) => orderController.addBulkItems(tableId, items, waiterId));
+
     // YANGI: HISOB chiqarish (Pre-check)
     ipcMain.handle('print-check', async (e, tableId) => {
         try {
@@ -136,6 +140,8 @@ function registerIpcHandlers(ipcMain) {
     ipcMain.handle('delete-user', (e, id) => staffController.deleteUser(id));
 
     ipcMain.handle('backup-db', () => settingsController.backupDB());
+
+    ipcMain.handle('get-system-printers', () => printerService.getPrinters());
 
     // ==========================================
     // 7. SMS MARKETING (Yangi Modul)

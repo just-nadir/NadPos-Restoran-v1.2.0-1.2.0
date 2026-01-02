@@ -28,13 +28,7 @@ function createWindow() {
     initScheduler(); // Scheduler ishga tushirildi
     registerIpcHandlers(ipcMain); // Handlerlar ro'yxatdan o'tdi
 
-    // Printerlarni olish
-    ipcMain.handle('get-system-printers', async () => {
-      const wins = BrowserWindow.getAllWindows();
-      if (wins.length === 0) return [];
-      const printers = await wins[0].webContents.getPrintersAsync();
-      return printers;
-    });
+
     log.info("Dastur ishga tushdi. Baza, Server va Scheduler yondi.");
   } catch (err) {
     log.error("Boshlang'ich yuklashda xato:", err);
