@@ -39,6 +39,13 @@ Hozirda asosiy e'tibor tizimning barqarorligini ta'minlash, VPS serverda ishlash
     -   **Windows Build Success**: 
         -   Resolved `winCodeSign`/`7zip` issues using **Local Cache** (`.builder-cache`) and **Clean Reinstall**.
         -   Successfully generated `NadPOS Restoran Setup 2.0.0.exe` using `electron-builder` with custom environment variables.
+    -   **Stolni Ko'chirish/Birlashtirish (Move/Merge Table)**:
+        -   **Backend**: `orderController.moveTable` funksiyasi yaratildi. Bu funksiya buyurtmalarni bir stoldan boshqasiga ko'chiradi (agar bo'sh bo'lsa) yoki birlashtiradi (agar band bo'lsa).
+        -   **UI**: `MoveTableModal` komponenti yaratildi va `OrderSummary` ga qo'shildi. Band stollar uchun "Stolni ko'chirish" tugmasi qo'shildi.
+    -   **UI/UX Fixes**:
+        -   **Dialog Z-Index**: `Dialog` komponenti `createPortal` yordamida `body` ga ko'chirildi, bu `TablesGrid` sarlavhasi ostida qolib ketish muammosini hal qildi.
+        -   **DialogFooter**: `src/components/ui/dialog.jsx` ga `DialogFooter` eksporti qo'shildi.
+        -   **Menu Modal**: Mahsulotlar ro'yxatidan va qidiruvdan mahsulot kodi ("Kod yo'q") olib tashlandi, faqat nomi va narxi qoldirildi.
 
 
 
