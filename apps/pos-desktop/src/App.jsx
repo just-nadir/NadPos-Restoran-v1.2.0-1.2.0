@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios'; // Import axios
+import { ThemeProvider } from './context/ThemeProvider';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import Onboarding from './components/Onboarding';
@@ -75,19 +76,21 @@ function App() {
   }
 
   return (
-    <ErrorBoundary>
-      <Router>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Asosiy Desktop ilova */}
-            <Route path="/" element={<DesktopLayout />} />
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <ErrorBoundary>
+        <Router>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Asosiy Desktop ilova */}
+              <Route path="/" element={<DesktopLayout />} />
 
-            {/* Mobil Ofitsiant ilovasi */}
-            <Route path="/waiter" element={<WaiterApp />} />
-          </Routes>
-        </Suspense>
-      </Router>
-    </ErrorBoundary>
+              {/* Mobil Ofitsiant ilovasi */}
+              <Route path="/waiter" element={<WaiterApp />} />
+            </Routes>
+          </Suspense>
+        </Router>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }
 

@@ -7,6 +7,8 @@ import { SyncController } from './sync/sync.controller';
 import { SyncService } from './sync/sync.service';
 import { RestaurantModule } from './restaurant/restaurant.module';
 import { Restaurant } from './restaurant/entities/restaurant.entity';
+import { Supply } from './restaurant/entities/supply.entity';
+import { SupplyItem } from './restaurant/entities/supply-item.entity';
 
 @Module({
   imports: [
@@ -17,8 +19,8 @@ import { Restaurant } from './restaurant/entities/restaurant.entity';
       username: 'nadpos_root',
       password: 'SecretPassword123!',
       database: 'nadpos_cloud',
-      entities: [Restaurant],
-      synchronize: false,
+      entities: [Restaurant, Supply, SupplyItem],
+      synchronize: true, // DEV ONLY: Enable to create tables
       logging: false, // Prod setting
     }),
     RestaurantModule,

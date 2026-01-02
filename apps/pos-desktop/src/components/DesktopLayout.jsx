@@ -1,5 +1,6 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { ShieldAlert, CheckCircle, AlertTriangle } from 'lucide-react';
+import { cn } from '../utils/cn';
 import { useGlobal } from '../context/GlobalContext';
 import { useIpcListener } from '../hooks/useIpcListener';
 import Sidebar from './Sidebar';
@@ -18,6 +19,7 @@ const DebtorsManagement = lazy(() => import('./DebtorsManagement'));
 const Reports = lazy(() => import('./Reports'));
 const Settings = lazy(() => import('./Settings'));
 const Marketing = lazy(() => import('./Marketing'));
+const InventoryManagement = lazy(() => import('./InventoryManagement'));
 
 // Yuklanayotganda ko'rsatiladigan chiroyli spinner
 const PageLoader = () => (
@@ -106,10 +108,14 @@ const DesktopLayout = () => {
           switch (activePage) {
             case 'pos':
               return (
-                <>
-                  <TablesGrid onSelectTable={setSelectedTable} />
-                  <OrderSummary table={selectedTable} onDeselect={() => setSelectedTable(null)} />
-                </>
+                <div className="flex flex-1 overflow-hidden divide-x divide-border">
+                  <div className="flex-1 min-w-0">
+                    <TablesGrid onSelectTable={setSelectedTable} selectedTableId={selectedTable?.id} />
+                  </div>
+                  <div className="flex-1 min-w-0 border-l border-border shadow-lg z-10">
+                    <OrderSummary table={selectedTable} onDeselect={() => setSelectedTable(null)} />
+                  </div>
+                </div>
               );
             case 'menu': return <MenuManagement />;
             case 'tables': return <TablesManagement />;
@@ -118,6 +124,7 @@ const DesktopLayout = () => {
             case 'reports': return <Reports />;
             case 'marketing': return <Marketing />;
             case 'settings': return <Settings />;
+            case 'inventory': return <InventoryManagement />;
             default: return <div>Sahifa topilmadi</div>;
           }
         })()}
@@ -126,11 +133,14 @@ const DesktopLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden font-sans relative">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans relative transition-colors duration-300">
 
       {/* Global Toast */}
       {toast && (
-        <div className={`absolute top-6 right-6 z-[9999] px-6 py-4 rounded-2xl shadow-2xl text-white font-bold flex items-center gap-3 animate-in slide-in-from-top duration-300 ${toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+        <div className={cn(
+          "absolute top-6 right-6 z-[9999] px-6 py-4 rounded-2xl shadow-2xl text-white font-bold flex items-center gap-3 animate-in slide-in-from-top duration-300",
+          toast.type === 'success' ? 'bg-green-600' : 'bg-destructive'
+        )}>
           {toast.type === 'success' ? <CheckCircle size={24} /> : <AlertTriangle size={24} />}
           <span className="text-lg">{toast.msg}</span>
         </div>

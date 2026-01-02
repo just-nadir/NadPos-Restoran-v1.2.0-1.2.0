@@ -80,16 +80,59 @@ function createV2Tables() {
         destination TEXT DEFAULT '1', -- Kitchen ID (UUID)
         is_active INTEGER DEFAULT 1,
         unit_type TEXT DEFAULT 'item', -- 'item' | 'kg'
+        stock REAL DEFAULT 0, -- YANGI: Qoldiq
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, deleted_at TEXT,
         FOREIGN KEY(category_id) REFERENCES categories(id)
     )`).run();
 
-    // Hotfix: Add unit_type if missing (for existing V2 DBs)
+    // Hotfix: Add unit_type and stock if missing (for existing V2 DBs)
     try {
         db.prepare("ALTER TABLE products ADD COLUMN unit_type TEXT DEFAULT 'item'").run();
-    } catch (e) {
-        // Column likely exists, ignore
-    }
+    } catch (e) { /* Column likely exists */ }
+
+    try {
+        db.prepare("ALTER TABLE products ADD COLUMN stock REAL DEFAULT 0").run();
+    } catch (e) { /* Column likely exists */ }
+
+    // 2.1 Stock History (Ombor Tarixi)
+    db.prepare(`CREATE TABLE IF NOT EXISTS stock_history (
+        id TEXT PRIMARY KEY,
+        product_id TEXT,
+        quantity REAL,
+        current_stock REAL,
+        type TEXT, -- 'in' (Kirim), 'out' (Chiqim - spidaniya), 'sale' (Sotuv), 'return' (Qaytarish), 'cancel' (Bekor qilish)
+        reason TEXT,
+        date TEXT,
+        user_name TEXT,
+        server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
+    )`).run();
+
+    // 2.2 Supplies (Kirim Hujjatlari)
+    db.prepare(`CREATE TABLE IF NOT EXISTS supplies (
+        id TEXT PRIMARY KEY,
+        supplier_name TEXT,
+        date TEXT,
+        status TEXT DEFAULT 'draft', -- 'draft' | 'completed'
+        total_amount REAL DEFAULT 0,
+        note TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        completed_at TEXT,
+        server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        deleted_at TEXT
+    )`).run();
+
+    db.prepare(`CREATE TABLE IF NOT EXISTS supply_items (
+        id TEXT PRIMARY KEY,
+        supply_id TEXT,
+        product_id TEXT,
+        quantity REAL,
+        price REAL,
+        total REAL,
+        server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(supply_id) REFERENCES supplies(id) ON DELETE CASCADE,
+        FOREIGN KEY(product_id) REFERENCES products(id)
+    )`).run();
 
     // 3. Buyurtmalar
     db.prepare(`CREATE TABLE IF NOT EXISTS order_items (
@@ -273,6 +316,10 @@ function createV2Tables() {
     // Performance Sync Indexes
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_sales_sync ON sales(is_synced)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_products_sync ON products(is_synced)`).run();
+
+    // Supplies Indexes
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_supplies_status ON supplies(status)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_supply_items_supply ON supply_items(supply_id)`).run();
 }
 
 // --- MIGRATION LOGIC (V1 -> V2) ---

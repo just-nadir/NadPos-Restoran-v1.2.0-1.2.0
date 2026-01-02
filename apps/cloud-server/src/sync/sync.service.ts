@@ -90,7 +90,9 @@ export class SyncService {
             'settings',
             'kitchens',
             'shifts',
-            'sms_templates'
+            'sms_templates',
+            'supplies',
+            'supply_items'
         ];
 
         for (const table of tables) {
@@ -107,7 +109,7 @@ export class SyncService {
     }
 
     private isValidTable(table: string): boolean {
-        const allowed = ['users', 'products', 'categories', 'tables', 'halls', 'sales', 'sale_items', 'customers', 'shifts', 'kitchens', 'settings'];
+        const allowed = ['users', 'products', 'categories', 'tables', 'halls', 'sales', 'sale_items', 'customers', 'shifts', 'kitchens', 'settings', 'supplies', 'supply_items'];
         return allowed.includes(table);
     }
 }

@@ -1,27 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
-  Users, Clock, Receipt, Hash, User, Search, Lock, Unlock
+  Users, Clock, Receipt, Hash, User, Search
 } from 'lucide-react';
 import { useIpcListener } from '../hooks/useIpcListener';
 import { useGlobal } from '../context/GlobalContext';
 import { formatDate, formatTime } from '../utils/dateUtils';
+import { cn } from '../utils/cn';
+import { Input } from './ui/input';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 
-const TablesGrid = ({ onSelectTable }) => {
+/* ... Imports remain ... */
+
+const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selectedTableId prop
   const [tables, setTables] = useState([]);
   const [halls, setHalls] = useState([]);
   const [activeHallId, setActiveHallId] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(''); // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFree, setShowFree] = useState(false);
 
-  // Settings ni global contextdan olamiz
-  const { settings } = useGlobal(); // <-- GlobalContext dan settings ni oldik
+  const { settings } = useGlobal();
 
-  // Ma'lumotlarni yuklash
   const loadData = async () => {
     try {
       if (window.electron && window.electron.ipcRenderer) {
-        // Promise.all orqali ikkalasini parallel yuklaymiz (Tezlik oshadi)
         const [hallsData, tablesData] = await Promise.all([
           window.electron.ipcRenderer.invoke('get-halls'),
           window.electron.ipcRenderer.invoke('get-tables')
@@ -37,157 +40,184 @@ const TablesGrid = ({ onSelectTable }) => {
     }
   };
 
-  // 1. Dastlabki yuklash
   useEffect(() => {
     loadData();
   }, []);
 
-  // 2. Real-vaqt yangilanishi (YANGI HOOK BILAN)
-  // 'db-change' kanali orqali xabar kelsa, va u bizga kerakli turda bo'lsa -> yangilaymiz
   useIpcListener('db-change', (event, data) => {
     if (['tables', 'sales', 'table-items'].includes(data.type)) {
       loadData();
     }
   });
 
-  // Filterlash logikasi
   const filteredTables = tables.filter(table => {
-    // Search filter
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = table.name.toLowerCase().includes(searchLower) ||
       (table.current_check_number && table.current_check_number.toString().includes(searchLower));
-
-    // Hall filter
     const isHallMatch = activeHallId === 'all' || table.hall_id === activeHallId;
-
-    // Status filter (Only show active tables)
-    const isActiveStatus = table.status !== 'free';
-
+    const isActiveStatus = showFree || table.status !== 'free';
+    // User requested "Active Tables" on left. So yes, filter by status logic implies showing what's relevant. 
+    // But usually we want to see ALL tables to select a free one. 
+    // Prompt says "Chap tomonda AKTIV STOLLAR". Let's stick to showing ALL, but sorting active first maybe?
+    // Wait, if I only show active, how do I open a new table?
+    // Let's show ALL for now, but style them clearly. The user said "Aktiv stollar", but strictly hiding free tables prevents new orders.
+    // I will show ALL, but group or sort them. Let's keep filter as is for now but maybe sort.
+    console.log(`Table: ${table.name}, Status: ${table.status}, ShowFree: ${showFree}, SafeActive: ${isActiveStatus}`);
     return isHallMatch && matchesSearch && isActiveStatus;
   });
 
-  // Dizayn yordamchilari
-  const getStatusColor = (status) => {
+  // Sort: Occupied first
+  const sortedTables = [...filteredTables].sort((a, b) => {
+    const statusOrder = { 'payment': 0, 'occupied': 1, 'reserved': 2, 'free': 3 };
+    return statusOrder[a.status] - statusOrder[b.status];
+  });
+
+
+  /* ... Helper functions ... */
+  const getStatusColor = (status, isSelected) => {
+    if (isSelected) return 'bg-primary text-primary-foreground border-primary ring-2 ring-primary ring-offset-2';
     switch (status) {
-      case 'occupied': return 'bg-white border-l-4 border-blue-500';
-      case 'payment': return 'bg-yellow-50 border-l-4 border-yellow-500';
-      case 'reserved': return 'bg-purple-50 border-l-4 border-purple-500'; // Reserved style
-      case 'free': return 'bg-white border text-gray-400 opacity-80'; // Free style
-      default: return 'bg-white';
+      case 'occupied': return 'bg-blue-50/50 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/10 dark:border-blue-800';
+      case 'payment': return 'bg-yellow-50/50 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/10 dark:border-yellow-800';
+      case 'reserved': return 'bg-purple-50/50 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/10 dark:border-purple-800';
+      case 'free': return 'bg-card border-border hover:bg-secondary/50';
+      default: return 'bg-card';
     }
   };
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'occupied': return <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">BAND</span>;
-      case 'payment': return <span className="bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">TO'LOV</span>;
-      case 'reserved': return <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">BAND QILINGAN</span>;
-      case 'free': return <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">BO'SH</span>;
+      case 'occupied': return <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">BAND</Badge>;
+      case 'payment': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">TO'LOV</Badge>;
+      case 'reserved': return <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">BAND QILINGAN</Badge>;
+      case 'free': return <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30">BO'SH</Badge>;
       default: return null;
     }
   };
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Yuklanmoqda...</div>;
+
+  if (loading) return <div className="p-10 text-center text-muted-foreground">Yuklanmoqda...</div>;
 
   return (
-    <div className="flex-1 bg-gray-50 h-screen flex flex-col overflow-hidden">
+    <div className="flex-1 bg-background h-full flex flex-col overflow-hidden">
       {/* HEADER */}
-      <div className="p-4 pb-2 bg-white shadow-sm z-10 shrink-0">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-gray-800">Kassa</h1>
-
-            {/* SEARCH INPUT */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                type="text"
-                placeholder="Stol qidirish..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium w-48 focus:w-64"
-              />
-            </div>
-          </div>
-
-          <div className="text-right">
-            <p className="font-bold text-lg text-gray-800">
-              {formatTime(new Date())}
-            </p>
-            <p className="text-xs text-gray-500">{formatDate(new Date())}</p>
-          </div>
+      <div className="p-4 border-b border-border bg-background z-10 shrink-0">
+        <div className="flex justify-between items-center mb-3">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Stollar</h1>
+          <Button
+            variant={showFree ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowFree(!showFree)}
+            className="gap-2 text-xs"
+          >
+            {showFree ? "Faqat faollar" : "Bo'sh stollar"}
+          </Button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button onClick={() => setActiveHallId('all')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${activeHallId === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Hammasi</button>
+        <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+          <Button
+            variant={activeHallId === 'all' ? 'default' : 'outline'}
+            onClick={() => setActiveHallId('all')}
+            size="sm"
+            className="rounded-full px-4"
+          >
+            Hammasi
+          </Button>
           {halls.map(hall => (
-            <button key={hall.id} onClick={() => setActiveHallId(hall.id)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${activeHallId === hall.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{hall.name}</button>
+            <Button
+              key={hall.id}
+              variant={activeHallId === hall.id ? 'default' : 'outline'}
+              onClick={() => setActiveHallId(hall.id)}
+              size="sm"
+              className="rounded-full whitespace-nowrap px-4"
+            >
+              {hall.name}
+            </Button>
           ))}
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input
+            type="text"
+            placeholder="Stol qidirish..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 w-full"
+          />
         </div>
       </div>
 
-      {/* GRID */}
-      <div className="p-4 overflow-y-auto pb-32">
-        <p className="text-gray-500 mb-2 text-xs font-bold uppercase tracking-wide">Faol buyurtmalar: {filteredTables.length} ta</p>
+      {/* LIST VIEW */}
+      <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
+        <div className="flex flex-col gap-2">
+          {sortedTables.map((table) => {
+            const isSelected = selectedTableId === table.id;
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredTables.map((table) => (
-            <div
-              key={table.id}
-              onClick={() => onSelectTable(table)}
-              className={`p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between h-auto min-h-[170px] ${getStatusColor(table.status)}`}
-            >
-              <div className="flex flex-col gap-2">
+            return (
+              <div
+                key={table.id}
+                onClick={() => onSelectTable(table)}
+                className={cn(
+                  "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer select-none",
+                  getStatusColor(table.status, isSelected),
+                  isSelected ? "shadow-md z-10 scale-[1.01]" : "shadow-sm active:scale-[0.99]"
+                )}
+              >
+                <div className="flex items-center gap-4">
+                  {/* Table Icon/Number Container */}
+                  <div className={cn(
+                    "w-12 h-12 rounded-full flex items-center justify-center font-black text-lg shadow-sm border",
+                    isSelected
+                      ? "bg-background text-primary border-transparent"
+                      : table.status === 'free' ? "bg-secondary text-muted-foreground border-transparent" : "bg-white text-foreground"
+                  )}>
+                    {table.name.replace(/\D/g, '') || <Hash size={20} />}
+                  </div>
 
-                {/* Tepasi: Nom va Status */}
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-lg text-gray-800 leading-tight">{table.name}</h3>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(table.status)}
-                    {/* Reservation Toggle Button Removed */}
+                  {/* Info */}
+                  <div className="flex flex-col">
+                    <h3 className={cn("font-bold text-lg leading-none mb-1", isSelected ? "text-primary-foreground" : "text-foreground")}>
+                      {table.name}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm opacity-90">
+                      {table.waiter_name ? (
+                        <span className="flex items-center gap-1"><User size={12} /> {table.waiter_name}</span>
+                      ) : <span className="text-xs italic opacity-70">Ofitsiant yo'q</span>}
+
+                      {table.status !== 'free' && (
+                        <>
+                          <span className="opacity-50">•</span>
+                          <span className="flex items-center gap-1 font-mono"><Clock size={12} /> {table.start_time}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Info qatori: Chek raqami va Ofitsiant */}
-                <div className="flex flex-wrap gap-2">
-                  {table.current_check_number > 0 && (
-                    <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-bold border border-gray-200">
-                      <Hash size={10} /> {table.current_check_number}
-                    </span>
-                  )}
-                  {table.waiter_name && (
-                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-xs font-bold border border-blue-100">
-                      <User size={10} /> {table.waiter_name}
-                    </span>
-                  )}
-                </div>
+                {/* Right Side: Status & Total */}
+                <div className="flex flex-col items-end gap-1">
+                  {getStatusBadge(table.status)}
 
-                {/* Vaqt va Mehmonlar */}
-                <div className="flex items-center gap-3 text-xs text-gray-400 font-medium">
-                  <div className="flex items-center gap-1"><Clock size={12} /> {table.start_time || '--:--'}</div>
-                  <div className="w-px h-3 bg-gray-300"></div>
-                  {/* Agar fixed bo'lsa yoki mehmon soni > 0 bo'lsa ko'rsatamiz */}
-                  {/* Agar fixed bo'lsa ko'rsatamiz */}
-                  {settings.serviceChargeType === 'fixed' && (
-                    <div className="flex items-center gap-1"><Users size={12} /> {table.guests}</div>
+                  {table.total_amount > 0 && (
+                    <div className={cn("font-bold text-lg tabular-nums mt-1", isSelected ? "text-white" : "text-primary")}>
+                      {table.total_amount.toLocaleString()} <span className="text-sm opacity-70">so'm</span>
+                    </div>
                   )}
+                  {table.status === 'free' && <span className="text-xs text-muted-foreground opacity-50 font-medium">--</span>}
                 </div>
               </div>
+            )
+          })}
 
-              {/* Pastki qism: Summa */}
-              <div className="pt-3 border-t border-gray-100 flex justify-between items-end mt-2">
-                <span className="text-gray-400 text-xs uppercase font-semibold">Jami</span>
-                <span className="font-bold text-xl text-gray-800 leading-none">
-                  {table.total_amount ? table.total_amount.toLocaleString() : 0}
-                </span>
-              </div>
-            </div>
-          ))}
-
-          {filteredTables.length === 0 && (
-            <div className="col-span-full py-20 text-center">
-              <div className="inline-block p-4 rounded-full bg-gray-100 mb-3 text-gray-400"><Receipt size={32} /></div>
-              <p className="text-gray-500">Bu zalda faol buyurtmalar yo'q</p>
+          {sortedTables.length === 0 && (
+            <div className="py-20 text-center text-muted-foreground flex flex-col items-center">
+              <p className="font-medium">Faol buyurtmalar yo'q</p>
+              {!showFree && (
+                <Button variant="link" onClick={() => setShowFree(true)} className="text-primary mt-2">
+                  + Yangi buyurtma ochish
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -196,5 +226,4 @@ const TablesGrid = ({ onSelectTable }) => {
   );
 };
 
-// React.memo bilan render optimizatsiyasi
 export default TablesGrid;

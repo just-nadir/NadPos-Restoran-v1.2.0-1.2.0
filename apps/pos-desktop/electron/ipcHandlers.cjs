@@ -10,6 +10,7 @@ const settingsController = require('./controllers/settingsController.cjs');
 const staffController = require('./controllers/staffController.cjs');
 const userController = require('./controllers/userController.cjs'); // Customers & Debtors
 const smsController = require('./controllers/smsController.cjs');   // SMS Marketing
+const inventoryController = require('./controllers/inventoryController.cjs'); // YANGI
 // const licenseController = require('./controllers/licenseController.cjs'); // License System (REMOVED)
 
 
@@ -54,6 +55,18 @@ function registerIpcHandlers(ipcMain) {
     ipcMain.handle('toggle-product-status', (e, { id, status }) => productController.toggleProductStatus(id, status));
     ipcMain.handle('delete-product', (e, id) => productController.deleteProduct(id));
 
+    // YANGI: Ombor V2 (Hujjatlar Tizimi)
+    ipcMain.handle('get-supplies', (e, status) => inventoryController.getSupplies(status));
+    ipcMain.handle('get-supply-details', (e, id) => inventoryController.getSupplyDetails(id));
+    ipcMain.handle('create-supply', (e, { supplier, date, note }) => inventoryController.createDraftSupply(supplier, date, note));
+    ipcMain.handle('add-supply-item', (e, { supplyId, productId, quantity, price }) => inventoryController.addSupplyItem(supplyId, productId, quantity, price));
+    ipcMain.handle('remove-supply-item', (e, itemId) => inventoryController.removeSupplyItem(itemId));
+    ipcMain.handle('complete-supply', (e, supplyId) => inventoryController.completeSupply(supplyId));
+    ipcMain.handle('delete-supply', (e, supplyId) => inventoryController.deleteSupply(supplyId));
+
+    // Tarix (Eski tarix ham ishlataveramiz)
+    ipcMain.handle('get-stock-history', () => productController.getStockHistory());
+
     // ==========================================
     // 4. ORDERS & CHECKOUT (Buyurtma va To'lov)
     // ==========================================
@@ -85,6 +98,11 @@ function registerIpcHandlers(ipcMain) {
     // YANGI: Alohida mahsulotni o'chirish
     ipcMain.handle('remove-order-item', async (e, itemId) => {
         return orderController.removeItem(itemId);
+    });
+
+    // YANGI: Qisman qaytarish
+    ipcMain.handle('return-order-item', async (e, { itemId, quantity, reason }) => {
+        return orderController.returnItem(itemId, quantity, reason);
     });
 
     // Hisobotlar uchun

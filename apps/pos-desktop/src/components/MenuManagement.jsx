@@ -33,8 +33,8 @@ const ProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct, ca
               {/* Oshxonalar bo'sh bo'lsa xato bermasligi uchun tekshiruv */}
               {kitchens && kitchens.length > 0 ? kitchens.map((k) => (
                 <button key={k.id} type="button" onClick={() => setNewProduct({ ...newProduct, destination: String(k.id) })}
-                  className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all 
-                    ${newProduct.destination === String(k.id) ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                  className={`p - 3 rounded - xl border flex flex - col items - center justify - center gap - 1 transition - all 
+                    ${newProduct.destination === String(k.id) ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} `}>
                   <ChefHat size={20} />
                   <span className="text-xs font-bold capitalize truncate w-full text-center">{k.name}</span>
                 </button>
@@ -47,11 +47,11 @@ const ProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct, ca
             <label className="block text-sm font-medium text-gray-700 mb-1">O'lchov birligi</label>
             <div className="flex gap-2">
               <button type="button" onClick={() => setNewProduct({ ...newProduct, unit_type: 'item' })}
-                className={`flex-1 p-3 rounded-xl border font-bold transition-all ${newProduct.unit_type !== 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                className={`flex - 1 p - 3 rounded - xl border font - bold transition - all ${newProduct.unit_type !== 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'} `}>
                 Dona
               </button>
               <button type="button" onClick={() => setNewProduct({ ...newProduct, unit_type: 'kg' })}
-                className={`flex-1 p-3 rounded-xl border font-bold transition-all ${newProduct.unit_type === 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                className={`flex - 1 p - 3 rounded - xl border font - bold transition - all ${newProduct.unit_type === 'kg' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'} `}>
                 Kg
               </button>
             </div>
@@ -74,6 +74,7 @@ const MenuManagement = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', price: '', category_id: '', destination: '1', unit_type: 'item' });
+
 
   // Kategoriya tahrirlash uchun
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -236,7 +237,7 @@ const MenuManagement = () => {
                 // Oddiy ko'rinish
                 <div
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`w-full px-4 py-3 rounded-xl font-medium transition-all cursor-pointer flex items-center justify-between ${activeCategory === cat.id ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`w - full px - 4 py - 3 rounded - xl font - medium transition - all cursor - pointer flex items - center justify - between ${activeCategory === cat.id ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'} `}
                 >
                   <span className="flex-1 text-left truncate">{cat.name}</span>
 
@@ -247,7 +248,7 @@ const MenuManagement = () => {
                         e.stopPropagation();
                         startEditCategory(cat);
                       }}
-                      className={`p-1.5 rounded-md transition-colors ${activeCategory === cat.id ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}`}
+                      className={`p - 1.5 rounded - md transition - colors ${activeCategory === cat.id ? 'hover:bg-blue-500' : 'hover:bg-gray-200'} `}
                       title="Tahrirlash"
                     >
                       <Edit2 size={14} />
@@ -257,7 +258,7 @@ const MenuManagement = () => {
                         e.stopPropagation();
                         confirmDeleteCategory(cat.id);
                       }}
-                      className={`p-1.5 rounded-md transition-colors ${activeCategory === cat.id ? 'hover:bg-red-500' : 'hover:bg-red-100 hover:text-red-600'}`}
+                      className={`p - 1.5 rounded - md transition - colors ${activeCategory === cat.id ? 'hover:bg-red-500' : 'hover:bg-red-100 hover:text-red-600'} `}
                       title="O'chirish"
                     >
                       <Trash2 size={14} />
@@ -282,18 +283,26 @@ const MenuManagement = () => {
         <div className="flex-1 overflow-y-auto p-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredProducts.map(product => (
-              <div key={product.id} className={`bg-white p-4 rounded-2xl shadow-sm border-2 transition-all relative group ${product.is_active ? 'border-transparent hover:border-blue-400' : 'border-gray-200 opacity-60'}`}>
+              <div key={product.id} className={`bg - white p - 4 rounded - 2xl shadow - sm border - 2 transition - all relative group ${product.is_active ? 'border-transparent hover:border-blue-400' : 'border-gray-200 opacity-60'} `}>
                 <div className="flex justify-between items-start mb-2">
                   <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs font-bold text-gray-500 uppercase truncate max-w-[100px]">
                     {product.kitchen_name || 'Aniqlanmagan'}
                   </span>
-                  <button onClick={() => toggleStatus(product.id, product.is_active)} className={`p-1.5 rounded-full ${product.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-200'}`}><Power size={16} /></button>
+                  <div className="flex gap-1">
+                    <button onClick={() => toggleStatus(product.id, product.is_active)} className={`p-1.5 rounded-full ${product.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-200'}`}><Power size={16} /></button>
+                  </div>
                 </div>
                 <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{product.name}</h3>
-                <p className="text-blue-600 font-bold">
-                  {product.price.toLocaleString()} so'm
-                  {product.unit_type === 'kg' && <span className="text-xs text-orange-500 ml-1 font-black">(KG)</span>}
+                <p className="text-blue-600 font-bold flex justify-between items-center">
+                  <span>{product.price.toLocaleString()} so'm</span>
+                  {product.unit_type === 'kg' && <span className="text-xs text-orange-500 font-black">(KG)</span>}
                 </p>
+
+                {/* SKLAD (Stock) Display */}
+                <div className={`mt - 2 text - xs font - medium py - 1 px - 2 rounded - lg inline - block ${product.stock <= 5 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'} `}>
+                  Qoldiq: <span className="font-bold">{product.stock || 0}</span> {product.unit_type === 'kg' ? 'kg' : 'dona'}
+                </div>
+
                 <button onClick={() => confirmDelete(product.id)} className="absolute bottom-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={18} /></button>
               </div>
             ))}

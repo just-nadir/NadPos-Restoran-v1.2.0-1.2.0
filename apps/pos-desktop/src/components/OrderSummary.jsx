@@ -3,13 +3,19 @@ import { CreditCard, Users, User, Wallet, X, Printer, Hash, Trash2, Search, Plus
 import PaymentModal from './PaymentModal';
 import CustomerModal from './CustomerModal';
 import ConfirmModal from './ConfirmModal';
+import ReturnModal from './ReturnModal';
 import { useGlobal } from '../context/GlobalContext';
+import { cn } from '../utils/cn';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 const OrderSummary = ({ table, onDeselect }) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToReturn, setItemToReturn] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [bonusToUse, setBonusToUse] = useState(0);
   const [orderItems, setOrderItems] = useState([]);
@@ -22,9 +28,7 @@ const OrderSummary = ({ table, onDeselect }) => {
   const [searchResults, setSearchResults] = useState([]);
   const searchInputRef = React.useRef(null);
 
-
-
-  const { settings, showToast } = useGlobal(); // Use global settings
+  const { settings, showToast } = useGlobal();
 
   useEffect(() => {
     setSelectedCustomer(null);
@@ -48,7 +52,6 @@ const OrderSummary = ({ table, onDeselect }) => {
       setLoading(false);
     }
   }
-
 
   useEffect(() => {
     loadProducts();
@@ -102,21 +105,15 @@ const OrderSummary = ({ table, onDeselect }) => {
   const handleAddProduct = async (product) => {
     if (!table || !window.electron) return;
     try {
-      // Add item directly (quantity 1)
       await window.electron.ipcRenderer.invoke('add-order-item', {
         table_id: table.id,
         product_id: product.id,
         quantity: 1,
         price: product.price
       });
-      // Clear search
       setSearchQuery('');
       setSearchResults([]);
-      // Reload items
-      setSearchResults([]);
-      // Reload items
       loadOrderItems(table.id);
-      // Optional: Sound effect
     } catch (err) {
       console.error(err);
       showToast('error', err.message);
@@ -133,8 +130,6 @@ const OrderSummary = ({ table, onDeselect }) => {
 
       if (result.success) {
         console.log(`✅ HISOB chop etildi: Check #${result.checkNumber}`);
-        // Statusni real-time yangilash uchun onDeselect chaqirilishi mumkin
-        // yoki stollarni qayta yuklash
       }
     } catch (error) {
       console.error('HISOB chiqarishda xato:', error);
@@ -145,7 +140,24 @@ const OrderSummary = ({ table, onDeselect }) => {
   };
 
   const handleRemoveItem = (item) => {
-    setItemToDelete(item);
+    setItemToReturn(item);
+  };
+
+  const handleReturnItem = async (itemId, quantity, reason) => {
+    if (!window.electron) return;
+    try {
+      const { ipcRenderer } = window.electron;
+      const result = await ipcRenderer.invoke('return-order-item', { itemId, quantity, reason });
+
+      if (result.success) {
+        showToast('success', 'Mahsulot muvaffaqiyatli qaytarildi');
+        loadOrderItems(table.id);
+      }
+      setItemToReturn(null);
+    } catch (error) {
+      console.error("Return item error:", error);
+      showToast('error', "Qaytarishda xatolik: " + error.message);
+    }
   };
 
   const confirmRemoveItem = async () => {
@@ -212,15 +224,10 @@ const OrderSummary = ({ table, onDeselect }) => {
       const { ipcRenderer } = window.electron;
 
       let checkoutData;
-
-      // Check if this is a split payment
       const isSplitPayment = Array.isArray(methodOrPayments);
 
       if (isSplitPayment) {
-        // Split payment mode
         const splitPayments = methodOrPayments;
-
-        // Generate payment_details for items_json
         const paymentDetails = splitPayments.map(p => ({
           method: p.method,
           amount: p.amount,
@@ -232,14 +239,13 @@ const OrderSummary = ({ table, onDeselect }) => {
           total: finalTotal,
           subtotal: subtotal,
           discount: discountAmount,
-          paymentMethod: 'split', // Indicate this is a split payment
+          paymentMethod: 'split',
           customerId: selectedCustomer ? selectedCustomer.id : null,
           items: orderItems,
           dueDate: null,
-          paymentDetails: paymentDetails // Array of payment objects
+          paymentDetails: paymentDetails
         };
       } else {
-        // Single payment mode (original behavior)
         const method = methodOrPayments;
         const dueDate = dueDateOrIsSplit;
 
@@ -280,61 +286,65 @@ const OrderSummary = ({ table, onDeselect }) => {
 
   if (!table) {
     return (
-      <div className="w-96 bg-white h-screen shadow-xl border-l border-gray-100 flex flex-col items-center justify-center text-gray-400 p-10 text-center">
-        <div className="bg-gray-100 p-6 rounded-full mb-4"><CreditCard size={48} /></div>
-        <h3 className="font-bold text-lg text-gray-600">Stol tanlanmagan</h3>
-        <p>Buyurtmani ko'rish uchun chap tomondan faol stolni tanlang.</p>
+      <div className="h-full w-full bg-card flex flex-col items-center justify-center text-muted-foreground p-10 text-center select-none animate-in fade-in">
+        <div className="bg-secondary/50 p-8 rounded-full mb-6">
+          <CreditCard size={64} strokeWidth={1.5} />
+        </div>
+        <h3 className="font-bold text-2xl text-foreground mb-2">Buyurtma yaratish uchun stol tanlang</h3>
+        <p className="text-base max-w-xs opacity-70">Chap tomondagi ro'yxatdan stolni tanlang yoki yangi stol oching.</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="w-96 bg-white h-screen shadow-xl flex flex-col border-l border-gray-100">
+      <div className="flex-1 w-full bg-card h-full flex flex-col border-none">
         {/* HEADER */}
-        <div className={`p-6 border-b border-gray-100 ${table.status === 'payment' ? 'bg-yellow-50' : 'bg-gray-50'}`}>
+        <div className={cn(
+          "p-6 border-b border-border transition-colors",
+          table.status === 'payment' ? 'bg-yellow-50 dark:bg-yellow-900/10' : 'bg-secondary/30'
+        )}>
           <div className="flex justify-between items-center mb-1">
-            <h2 className="text-2xl font-bold text-gray-800">{table.name}</h2>
+            <h2 className="text-2xl font-bold text-foreground">{table.name}</h2>
 
             {/* CHEK RAQAMI */}
             {table.current_check_number > 0 && (
-              <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">
-                <Hash size={14} className="text-gray-500" />
-                <span className="font-black text-lg text-gray-800">{table.current_check_number}</span>
+              <div className="flex items-center gap-1 bg-background px-3 py-1 rounded-full shadow-sm border border-border">
+                <Hash size={14} className="text-muted-foreground" />
+                <span className="font-black text-lg text-foreground">{table.current_check_number}</span>
               </div>
             )}
           </div>
 
           <div className="flex justify-between items-center mt-2">
             {settings.serviceChargeType === 'fixed' && (
-              <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Users size={14} /> <span>{guestsCount} mehmon</span>
               </div>
             )}
-            {settings.serviceChargeType !== 'fixed' && <div></div>} {/* Spacer if hidden */}
-            <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase
-              ${table.status === 'occupied' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>
+            {settings.serviceChargeType !== 'fixed' && <div></div>}
+            <Badge variant={table.status === 'occupied' ? 'default' : 'secondary'} className={table.status === 'occupied' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30'}>
               {table.status === 'occupied' ? 'Band' : 'To\'lov'}
-            </span>
+            </Badge>
           </div>
         </div>
 
         {/* SEARCH BAR */}
-        <div className="px-4 py-2 bg-white border-b border-gray-100 relative z-20">
+        <div className="px-4 py-3 bg-card border-b border-border relative z-20">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input
               ref={searchInputRef}
               type="text"
               placeholder="Mahsulot qidirish / Shtrixkod (F4)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-all font-medium"
+              className="pl-10 pr-8"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X size={16} />
               </button>
@@ -343,20 +353,20 @@ const OrderSummary = ({ table, onDeselect }) => {
 
           {/* Search Results Dropdown */}
           {searchResults.length > 0 && (
-            <div className="absolute top-full left-4 right-4 bg-white shadow-xl rounded-b-xl border border-gray-100 max-h-60 overflow-y-auto mt-1">
+            <div className="absolute top-full left-4 right-4 bg-popover shadow-xl rounded-b-xl border border-border max-h-60 overflow-y-auto mt-1 z-30">
               {searchResults.map(prod => (
                 <div
                   key={prod.id}
                   onClick={() => handleAddProduct(prod)}
-                  className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 flex justify-between items-center group"
+                  className="p-3 hover:bg-secondary cursor-pointer border-b border-border last:border-0 flex justify-between items-center group"
                 >
                   <div>
-                    <p className="font-bold text-gray-800 text-sm">{prod.name}</p>
-                    <p className="text-xs text-gray-400">{prod.code || 'Kod yo\'q'}</p>
+                    <p className="font-bold text-foreground text-sm">{prod.name}</p>
+                    <p className="text-xs text-muted-foreground">{prod.code || 'Kod yo\'q'}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-blue-600 text-sm">{prod.price.toLocaleString()}</span>
-                    <PlusCircle size={18} className="text-gray-300 group-hover:text-blue-500" />
+                    <span className="font-bold text-primary text-sm">{prod.price.toLocaleString()}</span>
+                    <PlusCircle size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </div>
               ))}
@@ -366,24 +376,24 @@ const OrderSummary = ({ table, onDeselect }) => {
 
         {/* CUSTOMER */}
         {selectedCustomer && (
-          <div className="px-6 py-4 bg-blue-50 border-b border-blue-100">
+          <div className="px-6 py-4 bg-primary/5 border-b border-primary/10">
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
-                <User size={18} className="text-blue-600" />
+                <User size={18} className="text-primary" />
                 <div>
-                  <p className="font-bold text-blue-800">{selectedCustomer.name}</p>
-                  <p className="text-xs text-blue-600">
+                  <p className="font-bold text-foreground">{selectedCustomer.name}</p>
+                  <p className="text-xs text-primary">
                     {selectedCustomer.type === 'discount'
                       ? `VIP: ${selectedCustomer.value}% Chegirma`
                       : `Bonus: ${selectedCustomer.balance.toLocaleString()} so'm`}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setSelectedCustomer(null)} className="p-1 hover:bg-blue-200 rounded text-blue-600"><X size={16} /></button>
+              <button onClick={() => setSelectedCustomer(null)} className="p-1 hover:bg-primary/20 rounded text-primary"><X size={16} /></button>
             </div>
             {selectedCustomer.type === 'cashback' && selectedCustomer.balance > 0 && (
-              <div className="bg-white p-2 rounded-lg border border-blue-200 mt-2">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <div className="bg-background p-2 rounded-lg border border-border mt-2">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Bonusdan:</span><span>Max: {selectedCustomer.balance.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -393,7 +403,7 @@ const OrderSummary = ({ table, onDeselect }) => {
                     value={bonusToUse === 0 ? '' : bonusToUse}
                     onChange={handleBonusChange}
                     placeholder="Summa"
-                    className="w-full outline-none text-sm font-bold text-gray-800 bg-transparent"
+                    className="w-full outline-none text-sm font-bold text-foreground bg-transparent"
                   />
                 </div>
               </div>
@@ -402,23 +412,23 @@ const OrderSummary = ({ table, onDeselect }) => {
         )}
 
         {/* ITEMS */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {loading ? <div className="text-center mt-10 text-gray-400">Yuklanmoqda...</div> :
-            orderItems.length === 0 ? <div className="text-center mt-10 text-gray-400">Buyurtmalar yo'q</div> :
+        <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
+          {loading ? <div className="text-center mt-10 text-muted-foreground">Yuklanmoqda...</div> :
+            orderItems.length === 0 ? <div className="text-center mt-10 text-muted-foreground">Buyurtmalar yo'q</div> :
               orderItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-center py-3 border-b border-dashed border-gray-200 last:border-0 group">
+                <div key={index} className="flex justify-between items-center py-3 border-b border-dashed border-border last:border-0 group">
                   <div>
-                    <p className="font-medium text-gray-800">{item.product_name}</p>
-                    <p className="text-xs text-gray-400">{item.price.toLocaleString()} x {item.quantity}</p>
+                    <p className="font-medium text-foreground">{item.product_name}</p>
+                    <p className="text-xs text-muted-foreground">{item.price.toLocaleString()} x {item.quantity}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-gray-700">{(item.price * item.quantity).toLocaleString()}</p>
+                  <div className="flex items-center gap-3">
+                    <p className="font-bold text-foreground">{(item.price * item.quantity).toLocaleString()}</p>
                     <button
                       onClick={() => handleRemoveItem(item)}
-                      className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                       title="O'chirish"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -426,54 +436,55 @@ const OrderSummary = ({ table, onDeselect }) => {
         </div>
 
         {/* TOTALS */}
-        <div className="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
-          <div className="flex justify-between text-gray-600"><span>Stol hisobi:</span><span>{subtotal.toLocaleString()}</span></div>
+        <div className="p-4 bg-secondary/20 border-t border-border space-y-2">
+          <div className="flex justify-between text-muted-foreground text-sm"><span>Stol hisobi:</span><span>{subtotal.toLocaleString()}</span></div>
 
-          <div className="flex justify-between text-gray-600">
+          <div className="flex justify-between text-muted-foreground text-sm">
             <span>Xizmat ({settings.serviceChargeType === 'percent' ? `${settings.serviceChargeValue}%` : 'Fixed'}):</span>
             <span>{service.toLocaleString()}</span>
           </div>
 
           {discountAmount > 0 && (
-            <div className="flex justify-between text-orange-600 font-medium"><span>Chegirma:</span><span>- {discountAmount.toLocaleString()}</span></div>
+            <div className="flex justify-between text-orange-500 font-medium text-sm"><span>Chegirma:</span><span>- {discountAmount.toLocaleString()}</span></div>
           )}
-          <div className="flex justify-between text-2xl font-bold text-blue-600 mt-2 border-t border-gray-200 pt-2"><span>Jami:</span><span>{finalTotal.toLocaleString()}</span></div>
+          <div className="flex justify-between text-2xl font-bold text-primary mt-2 border-t border-border pt-2"><span>Jami:</span><span>{finalTotal.toLocaleString()}</span></div>
         </div>
 
         {/* BUTTONS */}
-        <div className="p-4 border-t border-gray-100 space-y-3 bg-white">
+        <div className="p-4 border-t border-border space-y-3 bg-card">
           <div className="grid grid-cols-3 gap-2">
-            <button
+            <Button
+              variant="outline"
               onClick={() => setIsCancelModalOpen(true)}
               disabled={!table || orderItems.length === 0}
-              className={`flex items-center justify-center gap-1 py-3 border-2 rounded-xl font-bold transition-colors ${!table || orderItems.length === 0 ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200'}`}
+              className="text-destructive border-border hover:bg-destructive/10 hover:border-destructive/30"
               title="Buyurtmani bekor qilish"
             >
               <Trash2 size={20} />
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setIsCustomerModalOpen(true)}
-              className={`col-span-1 flex items-center justify-center gap-2 py-3 border-2 rounded-xl font-bold transition-colors ${selectedCustomer ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-100 text-gray-700 hover:bg-gray-50'}`}
+              className={cn("col-span-1 gap-2", selectedCustomer && "border-primary text-primary bg-primary/5")}
             >
               <User size={20} /> {selectedCustomer ? 'Almashtirish' : 'Mijoz'}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={handlePrintCheck}
               disabled={handlePrintCheckDisabled()}
-              className={`flex items-center justify-center gap-2 py-3 border-2 rounded-xl font-bold transition-colors ${handlePrintCheckDisabled()
-                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-white border-gray-100 text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200'
-                }`}
+              className="gap-2"
             >
               <Printer size={20} /> {printingCheck ? 'Chop...' : 'Chek'}
-            </button>
+            </Button>
           </div>
-          <button
+          <Button
+            size="lg"
             onClick={() => setIsPaymentModalOpen(true)}
-            className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+            className="w-full text-lg shadow-lg gap-2"
           >
             <CreditCard size={20} /> To'lovni Yopish
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -506,6 +517,13 @@ const OrderSummary = ({ table, onDeselect }) => {
         confirmText="Ha, o'chirish"
         cancelText="Bekor qilish"
         isDanger={true}
+      />
+
+      <ReturnModal
+        isOpen={!!itemToReturn}
+        onClose={() => setItemToReturn(null)}
+        onConfirm={handleReturnItem}
+        item={itemToReturn}
       />
     </>
   );

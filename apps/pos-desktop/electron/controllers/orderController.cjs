@@ -255,6 +255,26 @@ module.exports = {
                 const saleId = crypto.randomUUID();
                 db.prepare(`INSERT INTO sales (id, date, total_amount, subtotal, discount, payment_method, customer_id, items_json, check_number, waiter_name, guest_count, shift_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(saleId, date, total, subtotal, discount, paymentMethod, customerId, itemsJson, checkNumber, waiterName, guestCount, activeShift.id);
 
+                // --- YANGI: SKLAD (Stock) ni kamaytirish ---
+                items.forEach(item => {
+                    // Item product_name orqali product_id ni topishimiz kerak.
+                    // Lekin items arrayida product_id bo'lmasligi mumkin (chunki order_items da faqat name saqlanadi).
+                    // Shuning uchun name orqali qidiramiz.
+                    const product = db.prepare('SELECT id, stock FROM products WHERE name = ?').get(item.product_name);
+                    if (product) {
+                        const newStock = (product.stock || 0) - item.quantity;
+                        db.prepare('UPDATE products SET stock = ?, is_synced = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newStock, product.id);
+
+                        // History
+                        db.prepare(`INSERT INTO stock_history (
+                            id, product_id, quantity, current_stock, type, reason, date, user_name, server_id, restaurant_id, is_synced
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`).run(
+                            crypto.randomUUID(), product.id, item.quantity, newStock, 'sale', `Savdo #${checkNumber}`, date, waiterName, null, require('../database.cjs').RESTAURANT_ID
+                        );
+                    }
+                });
+                // -------------------------------------------
+
                 // Handle debt for split payments
                 if (paymentMethod === 'split' && paymentDetails && customerId) {
                     // Check if any payment is debt type
@@ -472,6 +492,73 @@ module.exports = {
 
         } catch (err) {
             log.error("removeItem xatosi:", err);
+            throw err;
+        }
+    },
+
+    returnItem: (itemId, quantity, reason) => {
+        try {
+            const returnTransaction = db.transaction(() => {
+                // 1. Mahsulotni topish
+                const item = db.prepare('SELECT * FROM order_items WHERE id = ?').get(itemId);
+                if (!item) throw new Error("Mahsulot topilmadi");
+
+                const tableId = item.table_id;
+                const price = item.price;
+                const oldQuantity = item.quantity;
+
+                if (quantity > oldQuantity) {
+                    throw new Error("Qaytariladigan miqdor mavjud miqdordan ko'p bo'lishi mumkin emas");
+                }
+
+                // Agar to'liq qaytarilayotgan bo'lsa
+                if (quantity === oldQuantity) {
+                    db.prepare('DELETE FROM order_items WHERE id = ?').run(itemId);
+                } else {
+                    // Qisman qaytarish
+                    db.prepare('UPDATE order_items SET quantity = quantity - ? WHERE id = ?').run(quantity, itemId);
+                }
+
+                // 2. Bekor qilinganlar ro'yxatiga qo'shish (Audit uchun)
+                const table = db.prepare('SELECT waiter_name, total_amount, name FROM tables WHERE id = ?').get(tableId);
+                const cancelledData = {
+                    table_id: tableId,
+                    date: new Date().toISOString(),
+                    total_amount: price * quantity, // Faqat qaytgan qismining summasi
+                    waiter_name: table ? table.waiter_name : "Noma'lum",
+                    items_json: JSON.stringify([{ ...item, quantity: quantity }]), // Qaytgan item
+                    reason: reason || "Qisman qaytarish"
+                };
+
+                db.prepare(`INSERT INTO cancelled_orders (id, table_id, date, total_amount, waiter_name, items_json, reason) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
+                    crypto.randomUUID(), cancelledData.table_id, cancelledData.date, cancelledData.total_amount, cancelledData.waiter_name, cancelledData.items_json, cancelledData.reason
+                );
+
+                // 3. Stol summasini yangilash
+                const currentTable = db.prepare('SELECT total_amount FROM tables WHERE id = ?').get(tableId);
+                let newTotal = (currentTable ? currentTable.total_amount : 0) - (price * quantity);
+                if (newTotal < 0) newTotal = 0;
+
+                const remainingItems = db.prepare('SELECT count(*) as count FROM order_items WHERE table_id = ?').get(tableId).count;
+
+                if (remainingItems === 0) {
+                    db.prepare(`UPDATE tables SET total_amount = 0, status = 'free', guests = 0, start_time = NULL, current_check_number = 0, waiter_id = 0, waiter_name = NULL WHERE id = ?`).run(tableId);
+                } else {
+                    db.prepare(`UPDATE tables SET total_amount = ? WHERE id = ?`).run(newTotal, tableId);
+                }
+
+                return { tableId };
+            });
+
+            const { tableId } = returnTransaction();
+
+            notify('tables', null);
+            notify('table-items', tableId);
+            log.info(`Mahsulot qaytarildi (Partial): ${itemId}, Qty: ${quantity}`);
+            return { success: true };
+
+        } catch (err) {
+            log.error("returnItem xatosi:", err);
             throw err;
         }
     }

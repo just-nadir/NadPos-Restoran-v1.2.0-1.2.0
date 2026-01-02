@@ -1,25 +1,31 @@
 import React from 'react';
-import { LayoutGrid, UtensilsCrossed, Settings, LogOut, Square, Users, FileText, PieChart, MessageSquare, Lock, Search, ChevronRight, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { LayoutGrid, UtensilsCrossed, Settings, LogOut, Square, Users, FileText, PieChart, MessageSquare, Lock, Search, Cloud, CloudOff, RefreshCw, Package, Moon, Sun, Monitor } from 'lucide-react';
 import { APP_INFO } from '../config/appConfig';
+import { cn } from '../utils/cn';
+import { Button } from './ui/button';
+import { useTheme } from '../context/ThemeProvider';
 
 const Sidebar = ({ activePage, onNavigate, onLogout, user, onCloseShift, syncStatus }) => {
+  const { theme, setTheme } = useTheme();
+
   const getSyncIcon = () => {
     const { status } = syncStatus || {};
-    if (status === 'syncing') return <RefreshCw className="animate-spin text-blue-500" size={20} />;
-    if (status === 'online') return <Cloud className="text-green-500" size={20} />;
-    if (status === 'error') return <CloudOff className="text-red-500" size={20} />;
-    return <CloudOff className="text-gray-300" size={20} />;
+    if (status === 'syncing') return <RefreshCw className="animate-spin text-blue-500" size={24} />;
+    if (status === 'online') return <Cloud className="text-green-500" size={24} />;
+    if (status === 'error') return <CloudOff className="text-red-500" size={24} />;
+    return <CloudOff className="text-muted-foreground" size={24} />;
   };
 
   const menuItems = [
-    { id: 'pos', icon: <LayoutGrid size={28} />, label: "Kassa" },
-    { id: 'menu', icon: <UtensilsCrossed size={28} />, label: "Menyu" },
-    { id: 'tables', icon: <Square size={28} />, label: "Zallar" },
-    { id: 'customers', icon: <Users size={28} />, label: "Mijozlar" },
-    { id: 'debtors', icon: <FileText size={28} />, label: "Qarzdorlar" },
-    { id: 'reports', icon: <PieChart size={28} />, label: "Xisobotlar" },
-    { id: 'marketing', icon: <MessageSquare size={28} />, label: "SMS" },
-    { id: 'settings', icon: <Settings size={28} />, label: "Sozlamalar" },
+    { id: 'pos', icon: <LayoutGrid />, label: "Kassa" },
+    { id: 'menu', icon: <UtensilsCrossed />, label: "Menyu" },
+    { id: 'tables', icon: <Square />, label: "Zallar" },
+    { id: 'customers', icon: <Users />, label: "Mijozlar" },
+    { id: 'debtors', icon: <FileText />, label: "Qarzlar" },
+    { id: 'reports', icon: <PieChart />, label: "Xisobot" },
+    { id: 'marketing', icon: <MessageSquare />, label: "SMS" },
+    { id: 'inventory', icon: <Package />, label: "Ombor" },
+    { id: 'settings', icon: <Settings />, label: "Sozlama" },
   ];
 
   // Ruxsatlar mantiqi
@@ -36,49 +42,63 @@ const Sidebar = ({ activePage, onNavigate, onLogout, user, onCloseShift, syncSta
   });
 
   return (
-    <div className="w-[90px] bg-white h-screen flex flex-col items-center py-4 shadow-lg z-10">
-      {/* Logo olib tashlandi */}
+    <div className="w-[100px] bg-card border-r border-border h-screen flex flex-col items-center py-4 z-10 transition-colors duration-300">
 
-      <div className="flex-1 flex flex-col gap-3 w-full px-2 overflow-y-auto scrollbar-hide mt-2">
+      {/* Brand / Logo Area could go here */}
+
+      <div className="flex-1 flex flex-col gap-2 w-full px-2 overflow-y-auto scrollbar-hide mt-2">
         {filteredItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
-            className={`flex flex-col items-center justify-center py-3 px-1 rounded-xl transition-all duration-200 group
-              ${activePage === item.id
-                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
-              }`}
+            className={cn(
+              "flex flex-col items-center justify-center py-3 px-1 rounded-xl transition-all duration-200 group w-full min-h-[70px]",
+              activePage === item.id
+                ? "bg-primary text-primary-foreground shadow-md transform scale-[1.02]"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
             title={item.label}
           >
-            <div className="mb-1">
-              {React.cloneElement(item.icon, { size: 28 })}
+            <div className="mb-1 [&>svg]:w-7 [&>svg]:h-7">
+              {item.icon}
             </div>
-            <span className="text-xs font-medium text-center leading-tight">{item.label}</span>
+            <span className="text-[11px] font-semibold text-center leading-tight">{item.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 w-full px-2 mb-2 border-t pt-4 border-gray-100">
+      <div className="flex flex-col gap-3 w-full px-2 mb-2 border-t border-border pt-4 bg-card">
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex flex-col items-center justify-center p-3 text-muted-foreground hover:bg-secondary rounded-xl transition-colors"
+          title="Mavzuni o'zgartirish"
+        >
+          {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+        </button>
+
+
         {onCloseShift && (
           <button
             onClick={onCloseShift}
-            className="flex flex-col items-center justify-center p-3 text-orange-400 hover:text-orange-600 rounded-xl hover:bg-orange-50 transition-colors"
+            className="flex flex-col items-center justify-center p-3 text-orange-500 hover:text-orange-600 hover:bg-orange-100/10 rounded-xl transition-colors"
             title="Smenani Yopish"
           >
             <Lock size={24} />
           </button>
         )}
+
         <div className="flex flex-col items-center gap-3 mb-2">
           {/* Sync Indicator */}
-          <div className="p-2 rounded-full bg-gray-50 flex items-center justify-center" title={`Sync: ${syncStatus?.status || 'Offline'} - ${syncStatus?.lastSync || ''}`}>
+          <div className="p-2 rounded-full bg-secondary flex items-center justify-center" title={`Sync: ${syncStatus?.status || 'Offline'} - ${syncStatus?.lastSync || ''}`}>
             {getSyncIcon()}
           </div>
 
-          <button onClick={onLogout} className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-all shadow-sm border border-red-100" title="Chiqish">
+          <button onClick={onLogout} className="p-3 text-destructive hover:bg-destructive/10 rounded-xl transition-all" title="Chiqish">
             <LogOut size={24} />
           </button>
-          <span className="text-[10px] text-gray-400 font-bold">{APP_INFO.version}</span>
+          <span className="text-[10px] text-muted-foreground font-mono">{APP_INFO.version}</span>
         </div>
       </div>
     </div>
