@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Search, ShoppingBag, Minus, Plus, Trash2, Send, ChefHat } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -162,9 +163,9 @@ const MenuModal = ({ isOpen, onClose, tableId, tableName }) => {
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
-            <div className="bg-background w-[95vw] h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-border">
+            <div className="bg-background w-[95vw] h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-border" onClick={(e) => e.stopPropagation()}>
                 {/* HEADER */}
                 <div className="p-4 border-b border-border flex justify-between items-center bg-card shrink-0">
                     <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -356,7 +357,8 @@ const MenuModal = ({ isOpen, onClose, tableId, tableName }) => {
                     </div>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 };
 

@@ -46,6 +46,11 @@ Hozirda asosiy e'tibor tizimning barqarorligini ta'minlash, VPS serverda ishlash
         -   **Dialog Z-Index**: `Dialog` komponenti `createPortal` yordamida `body` ga ko'chirildi, bu `TablesGrid` sarlavhasi ostida qolib ketish muammosini hal qildi.
         -   **DialogFooter**: `src/components/ui/dialog.jsx` ga `DialogFooter` eksporti qo'shildi.
         -   **Menu Modal**: Mahsulotlar ro'yxatidan va qidiruvdan mahsulot kodi ("Kod yo'q") olib tashlandi, faqat nomi va narxi qoldirildi.
+    -   **Shift Modal**: Smenani yopish/ochish oynasiga "X" (yopish) tugmasi va "Bekor qilish" tugmasi qo'shildi. Bu notog'ri bosilishlarning oldini oladi.
+    -   **Shift Logic**: Smenani yopishdan oldin faol stollar bor-yo'qligi tekshiriladi. Agar ochiq stollar bo'lsa, tizim smenani yopishga ruxsat bermaydi.
+    -   **Modal Z-Index Fixes**: `PaymentModal`, `MenuModal` va `ShiftModal` ham `createPortal` yordamida `body` ga ko'chirildi. Bu barcha modallarning `TablesGrid` ustida to'g'ri ko'rinishini ta'minlaydi.
+    -   **Payment Redesign**: To'lov oynasi qayta ishlandi (Numpad, Inline Inputs, Auto-calc). Split to'lov birlashtirildi.
+
 
 
 

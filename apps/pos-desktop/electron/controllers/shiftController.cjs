@@ -35,6 +35,12 @@ module.exports = {
                 throw new Error("Ochiq smena topilmadi!");
             }
 
+            // Faol stollar borligini tekshirish
+            const activeTables = db.prepare("SELECT COUNT(*) as count FROM tables WHERE status != 'free'").get();
+            if (activeTables.count > 0) {
+                throw new Error("Diqqat! Barcha stollar yopilmagan. Smenani yopishdan oldin iltimos, faol stollarni hisob-kitob qiling.");
+            }
+
             const endTime = new Date().toISOString();
             const shiftId = activeShift.id;
 

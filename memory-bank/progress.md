@@ -26,7 +26,9 @@
 -   [x] **Weighted Products**: Mahsulotlarni kg va dona da sotish imkoniyati qo'shildi (Waiter App + DB).
 -   [x] **Windows Distribution**: `dist:win` va `electron-builder` muammolari hal qilindi va `.exe` installer yaratildi.
 -   [x] **Table Move/Merge**: Stollar o'rtasida buyurtmalarni ko'chirish va birlashtirish funksiyasi to'liq ishga tushirildi.
--   [x] **UI Polish**: Dialog z-index va Menyu kodini ko'rsatmaslik kabi kichik UI tuzatishlar kiritildi.
+-   [x] **UI Polish**: Barcha modallar (`Payment`, `Menu`, `Shift`, `MoveTable`) `createPortal` ga o'tkazildi, z-index muammolari to'liq hal qilindi. Menyu va Smena oynasi UI yaxshilandi.
+-   [x] **Shift Logic Protection**: Faol stollar mavjud bo'lsa smenani yopish taqiqlandi.
+-   [x] **Payment Redesign**: To'lov oynasiga Numpad va avto-hisoblash qo'shildi. Chap tomon (Button + Input) va "Overwrite Mode" (Shift-selection effekti) qo'shildi.
 
 
 

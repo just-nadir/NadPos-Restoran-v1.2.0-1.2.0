@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Lock, Unlock, DollarSign, X } from 'lucide-react';
 import { useGlobal } from '../context/GlobalContext';
 
@@ -39,25 +40,25 @@ const ShiftModal = ({ mode, onClose }) => {
             onClose();
         } catch (err) {
             console.error(err);
-            showToast('error', err.message);
+            // Electron IPC error prefixini olib tashlash
+            const message = err.message.replace(/Error invoking remote method '.*?': Error: /, '').replace('Error: ', '');
+            showToast('error', message);
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
-            <div className="bg-white p-8 rounded-3xl shadow-2xl w-[400px] border border-gray-100">
+    return createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200">
+            <div className="bg-white p-8 rounded-3xl shadow-2xl w-[400px] border border-gray-100" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
                         {isClosing ? <Lock className="text-red-500" /> : <Unlock className="text-green-500" />}
                         {isClosing ? "Smenani Yopish" : "Smenani Ochish"}
                     </h2>
-                    {!isClosing && (
-                        <button onClick={onClose} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                            <X size={20} className="text-gray-500" />
-                        </button>
-                    )}
+                    <button onClick={onClose} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                        <X size={20} className="text-gray-500" />
+                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -111,20 +112,30 @@ const ShiftModal = ({ mode, onClose }) => {
                         </p>
                     )}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full py-4 rounded-xl font-bold text-lg text-white shadow-lg transform active:scale-95 transition-all
-              ${isClosing
-                                ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-red-200 hover:shadow-red-300'
-                                : 'bg-gradient-to-r from-green-500 to-green-600 shadow-green-200 hover:shadow-green-300'
-                            } ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                        {loading ? "Bajarilmoqda..." : (isClosing ? "YOPISH VA Z-REPORT" : "SMENANI OCHISH")}
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-4 rounded-xl font-bold text-lg text-gray-700 bg-gray-100 hover:bg-gray-200 shadow-sm transition-all active:scale-95"
+                        >
+                            Bekor qilish
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`flex-[2] py-4 rounded-xl font-bold text-lg text-white shadow-lg transform active:scale-95 transition-all
+                  ${isClosing
+                                    ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-red-200 hover:shadow-red-300'
+                                    : 'bg-gradient-to-r from-green-500 to-green-600 shadow-green-200 hover:shadow-green-300'
+                                } ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        >
+                            {loading ? "Bajarilmoqda..." : (isClosing ? "YOPISH VA Z-REPORT" : "SMENANI OCHISH")}
+                        </button>
+                    </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

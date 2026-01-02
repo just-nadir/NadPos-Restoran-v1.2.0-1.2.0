@@ -241,12 +241,12 @@
         "id": "4946e050-65bd-41d1-a8ed-a2cad266de9c",
         "hall_id": "a85d9e0e-2523-4138-af2d-f535eef3fed9",
         "name": "2",
-        "status": "occupied",
-        "start_time": "2026-01-02T19:56:33.816Z",
-        "total_amount": 148000,
-        "current_check_number": 19,
-        "waiter_id": "a2e17706-be7f-4d27-9a79-d26538d39a1c",
-        "waiter_name": "Admin",
+        "status": "free",
+        "start_time": null,
+        "total_amount": 0,
+        "current_check_number": 0,
+        "waiter_id": null,
+        "waiter_name": null,
         "guests": 0,
         "server_id": null,
         "restaurant_id": "5a2f9e15-8d48-4d15-985d-69f6f3dc8b55",
@@ -498,9 +498,9 @@
         "server_id": null,
         "restaurant_id": "5a2f9e15-8d48-4d15-985d-69f6f3dc8b55",
         "is_synced": 0,
-        "updated_at": "2026-01-02T14:53:51.000Z",
+        "updated_at": "2026-01-02T15:51:26.000Z",
         "deleted_at": "2026-01-02T11:45:51.591Z",
-        "stock": -11.85
+        "stock": -12.85
       },
       {
         "id": "a7af47a4-5184-414a-b3e3-dced88dda549",
@@ -528,9 +528,9 @@
         "server_id": null,
         "restaurant_id": "5a2f9e15-8d48-4d15-985d-69f6f3dc8b55",
         "is_synced": 0,
-        "updated_at": "2026-01-02T13:10:11.000Z",
+        "updated_at": "2026-01-02T15:51:26.000Z",
         "deleted_at": null,
-        "stock": 60
+        "stock": 58
       },
       {
         "id": "bd193ef2-42f5-4cac-8ced-cd5976786b2d",
@@ -580,6 +580,29 @@
         "is_synced": 0,
         "updated_at": "2026-01-02T13:02:21.000Z",
         "deleted_at": null
+      }
+    ],
+    "shifts": [
+      {
+        "id": "835f6e9b-1ca2-4aa7-8409-3c1e440f7101",
+        "start_time": "2026-01-02T20:13:51.637Z",
+        "end_time": null,
+        "start_cash": 0,
+        "end_cash": 0,
+        "declared_cash": 0,
+        "declared_card": 0,
+        "difference_cash": 0,
+        "difference_card": 0,
+        "status": "open",
+        "cashier_name": "Admin",
+        "total_sales": 0,
+        "total_cash": 0,
+        "total_card": 0,
+        "total_transfer": 0,
+        "server_id": null,
+        "restaurant_id": null,
+        "is_synced": 0,
+        "updated_at": "2026-01-02T15:13:51.000Z"
       }
     ],
     "sales": [
@@ -870,32 +893,24 @@
         "restaurant_id": null,
         "is_synced": 0,
         "updated_at": "2026-01-02T14:53:51.000Z"
-      }
-    ],
-    "order_items": [
-      {
-        "id": "d609f233-67c7-4acb-9fc5-4b0883c0b15d",
-        "table_id": "4946e050-65bd-41d1-a8ed-a2cad266de9c",
-        "product_name": "Baliq Sazan",
-        "price": 120000,
-        "quantity": 1,
-        "destination": "1",
-        "server_id": null,
-        "restaurant_id": null,
-        "is_synced": 0,
-        "updated_at": "2026-01-02T14:56:33.000Z"
       },
       {
-        "id": "3b056158-80aa-48fb-a535-a93896ddb0e9",
-        "table_id": "4946e050-65bd-41d1-a8ed-a2cad266de9c",
-        "product_name": "Shashlik kusk",
-        "price": 14000,
-        "quantity": 2,
-        "destination": "1",
+        "id": "6d62ae15-24a9-41bb-a726-118f2bbdcc61",
+        "check_number": 19,
+        "date": "2026-01-02T20:51:26.340Z",
+        "total_amount": 148000,
+        "subtotal": 148000,
+        "discount": 0,
+        "payment_method": "split",
+        "customer_id": null,
+        "waiter_name": "Admin",
+        "guest_count": 0,
+        "items_json": "{\"items\":[{\"id\":\"d609f233-67c7-4acb-9fc5-4b0883c0b15d\",\"table_id\":\"4946e050-65bd-41d1-a8ed-a2cad266de9c\",\"product_name\":\"Baliq Sazan\",\"price\":120000,\"quantity\":1,\"destination\":\"1\",\"server_id\":null,\"restaurant_id\":null,\"is_synced\":0,\"updated_at\":\"2026-01-02 19:56:33\"},{\"id\":\"3b056158-80aa-48fb-a535-a93896ddb0e9\",\"table_id\":\"4946e050-65bd-41d1-a8ed-a2cad266de9c\",\"product_name\":\"Shashlik kusk\",\"price\":14000,\"quantity\":2,\"destination\":\"1\",\"server_id\":null,\"restaurant_id\":null,\"is_synced\":0,\"updated_at\":\"2026-01-02 20:00:08\"}],\"paymentDetails\":[{\"method\":\"cash\",\"amount\":25000,\"dueDate\":null},{\"method\":\"card\",\"amount\":65000,\"dueDate\":null},{\"method\":\"click\",\"amount\":58000,\"dueDate\":null}]}",
+        "shift_id": "835f6e9b-1ca2-4aa7-8409-3c1e440f7101",
         "server_id": null,
         "restaurant_id": null,
         "is_synced": 0,
-        "updated_at": "2026-01-02T15:00:08.000Z"
+        "updated_at": "2026-01-02T15:51:26.000Z"
       }
     ],
     "debt_history": [
