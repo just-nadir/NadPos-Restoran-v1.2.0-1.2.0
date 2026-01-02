@@ -123,12 +123,16 @@ async function pushChanges() {
                     if ((table === 'sales' || table === 'cancelled_orders') && clean.items_json) {
                         try {
                             const items = JSON.parse(clean.items_json);
-                            const cleanItems = items.map(item => ({
-                                ...item,
-                                quantity: typeof item.quantity === 'number' ? Number(item.quantity.toFixed(4)) : item.quantity,
-                                price: typeof item.price === 'number' ? Number(item.price) : item.price
-                            }));
-                            clean.items_json = JSON.stringify(cleanItems);
+                            if (Array.isArray(items)) {
+                                const cleanItems = items.map(item => ({
+                                    ...item,
+                                    quantity: typeof item.quantity === 'number' ? Number(item.quantity.toFixed(4)) : item.quantity,
+                                    price: typeof item.price === 'number' ? Number(item.price) : item.price
+                                }));
+                                clean.items_json = JSON.stringify(cleanItems);
+                            } else {
+                                console.warn(`items_json is not an array for ${table} ${clean.id}`);
+                            }
                         } catch (err) {
                             console.warn(`Failed to clean items_json for ${table} ${clean.id}`, err);
                         }
@@ -190,6 +194,7 @@ async function pushChanges() {
         log.error("Sync Push Error:", e);
         console.error("Sync Push Error:", e);
         notifyUI('error', null);
+        return null;
     }
     return false;
 }
@@ -224,6 +229,11 @@ function startSyncService() {
 
         const pulled = await pullChanges();
         const pushed = await pushChanges();
+
+        // If any error occurred (returned null), do not set status to online
+        if (pulled === null || pushed === null) {
+            return;
+        }
 
         // Always notify online if we successfully checked (didn't catch an error)
         // Since error states are handled inside push/pull, if we are here we are "online"
@@ -288,6 +298,7 @@ async function pullChanges() {
         log.error("Sync Pull Error:", e);
         console.error("Sync Pull Error:", e);
         notifyUI('error', null);
+        return null;
     }
     return false;
 }

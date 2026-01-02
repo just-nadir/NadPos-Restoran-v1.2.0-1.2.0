@@ -49,7 +49,10 @@ Hozirda asosiy e'tibor tizimning barqarorligini ta'minlash, VPS serverda ishlash
     -   **Shift Modal**: Smenani yopish/ochish oynasiga "X" (yopish) tugmasi va "Bekor qilish" tugmasi qo'shildi. Bu notog'ri bosilishlarning oldini oladi.
     -   **Shift Logic**: Smenani yopishdan oldin faol stollar bor-yo'qligi tekshiriladi. Agar ochiq stollar bo'lsa, tizim smenani yopishga ruxsat bermaydi.
     -   **Modal Z-Index Fixes**: `PaymentModal`, `MenuModal` va `ShiftModal` ham `createPortal` yordamida `body` ga ko'chirildi. Bu barcha modallarning `TablesGrid` ustida to'g'ri ko'rinishini ta'minlaydi.
-    -   **Payment Redesign**: To'lov oynasi qayta ishlandi (Numpad, Inline Inputs, Auto-calc). Split to'lov birlashtirildi.
+    -   **Payment Redesign**: To'lov oynasi (Split, Numpad, Overwrite Mode) qayta ishlandi.
+    -   **Startup Optimization**: Litsenziya tekshiruvi (Online Verify) fon rejimiga o'tkazildi. Dastur endi darhol ochiladi (Optimistic UI).
+    -   **Server Fix (VPS)**: 500 xatolik sababi aniqlandi (Postgres bazada `products.stock` ustuni yo'q edi). VPS ga ulanib, `SecretPassword123!` paroli bilan `nadpos_root` useri orqali ustun qo'shildi.
+    -   **Sync Crash Fix (Desktop)**: `sync_service.cjs` dagi `items.map` xatoligi bartaraf etildi (Array bo'lmagan holatlar uchun tekshiruv qo'shildi). Sinxronizatsiya endi to'liq ishlaydi.
 
 
 

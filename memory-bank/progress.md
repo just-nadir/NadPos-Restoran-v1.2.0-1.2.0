@@ -29,6 +29,8 @@
 -   [x] **UI Polish**: Barcha modallar (`Payment`, `Menu`, `Shift`, `MoveTable`) `createPortal` ga o'tkazildi, z-index muammolari to'liq hal qilindi. Menyu va Smena oynasi UI yaxshilandi.
 -   [x] **Shift Logic Protection**: Faol stollar mavjud bo'lsa smenani yopish taqiqlandi.
 -   [x] **Payment Redesign**: To'lov oynasiga Numpad va avto-hisoblash qo'shildi. Chap tomon (Button + Input) va "Overwrite Mode" (Shift-selection effekti) qo'shildi.
+-   [x] **Startup Optimization**: Litsenziya tekshiruvi (Online Verify) fon rejimiga o'tkazildi. Dastur endi darhol ochiladi.
+-   [x] **Cloud Sync Fix**: VPS dagi bazaga yetishmayotgan ustun (`stock`) qo'shildi va 500 xatolik bartaraf etildi.
 
 
 

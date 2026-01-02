@@ -28,29 +28,37 @@ function App() {
       try {
         const settings = await window.electron.ipcRenderer.invoke('get-settings');
         if (settings && settings.restaurant_id && settings.access_key) {
-          // ONLINE VERIFICATION
-          try {
-            await axios.get(`https://halboldi.uz/api/restaurants/${settings.restaurant_id}/verify`, {
-              headers: { 'x-access-key': settings.access_key }
-            });
-            setIsConfigured(true);
-          } catch (err) {
+          // 1. Optimistic UI: Darhol dasturni ochish
+          setIsConfigured(true);
+          setConfigChecked(true);
+
+          // 2. Background Verification
+          // Fon rejimida tekshirish (foydalanuvchini kutdirmaslik uchun)
+          axios.get(`https://halboldi.uz/api/restaurants/${settings.restaurant_id}/verify`, {
+            headers: { 'x-access-key': settings.access_key }
+          }).then(() => {
+            // Hammasi joyida
+          }).catch(err => {
             if (err.response && err.response.status === 403) {
+              // Obuna tugagan bo'lsa, bloklash
               setSubscriptionExpired(true);
               setBlockReason(err.response.data.message || "Obuna muddati tugagan.");
             } else {
-              // Offline or Server Error -> Allow access (Offline First)
-              console.log("Offline mode or Server Error:", err.message);
-              setIsConfigured(true);
+              console.log("Background check error (Offline/Server):", err.message);
             }
-          }
+          });
+        } else {
+          // Sozlamalar yo'q -> Onboarding
+          setIsConfigured(false);
+          setConfigChecked(true);
         }
       } catch (err) {
         console.error('Config check failed:', err);
-      } finally {
+        // Xatolik bo'lsa ham onboardingga o'tkazish xavfsizroq yoki retry qilish kerak
         setConfigChecked(true);
       }
     };
+
     checkConfig();
   }, []);
 
