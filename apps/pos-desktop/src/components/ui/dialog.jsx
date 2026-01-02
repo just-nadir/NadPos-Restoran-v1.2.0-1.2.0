@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../utils/cn';
 import { X } from 'lucide-react';
 
@@ -11,12 +12,13 @@ const Dialog = ({ open, onOpenChange, children }) => {
         }
         return () => {
             document.body.style.overflow = 'unset';
+            document.body.removeAttribute("style");
         };
     }, [open]);
 
     if (!open) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
             {/* Backdrop */}
             <div
@@ -27,7 +29,8 @@ const Dialog = ({ open, onOpenChange, children }) => {
             <div className="relative z-50 w-full p-4 pointer-events-none flex justify-center">
                 {children}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -58,4 +61,15 @@ const DialogTitle = ({ children, className }) => {
     );
 };
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle };
+const DialogFooter = ({ className, ...props }) => (
+    <div
+        className={cn(
+            "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+            className
+        )}
+        {...props}
+    />
+);
+DialogFooter.displayName = "DialogFooter";
+
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter };

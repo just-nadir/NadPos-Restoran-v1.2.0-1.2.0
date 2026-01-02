@@ -1,6 +1,6 @@
 const { db, notify } = require('../database.cjs');
 const log = require('electron-log');
-const telegramController = require('./telegramController.cjs');
+// const telegramController = require('./telegramController.cjs');
 const crypto = require('crypto');
 
 module.exports = {
@@ -88,12 +88,14 @@ module.exports = {
 
             log.info(`Smena yopildi: ID ${shiftId}`);
 
-            // Telegramga hisobot yuborish
+            // Telegramga hisobot yuborish (Removed)
+            /*
             try {
                 await telegramController.sendShiftReport(shiftId);
             } catch (tgErr) {
                 log.warn("Telegram Z-Report xatosi:", tgErr.message);
             }
+            */
 
             // Printerga chiqarish (Z-Report)
             try {

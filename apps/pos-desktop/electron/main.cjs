@@ -3,9 +3,8 @@ const path = require('path');
 const log = require('electron-log');
 const { initDB, onChange } = require('./database.cjs');
 const startServer = require('./server.cjs');
-const initScheduler = require('./services/scheduler.cjs'); // YANGI
-const registerIpcHandlers = require('./ipcHandlers.cjs'); // YANGI
-const { startSyncService, setMainWindow } = require('./sync_service.cjs'); // YANGI
+const registerIpcHandlers = require('./ipcHandlers.cjs');
+const { startSyncService, setMainWindow } = require('./sync_service.cjs');
 
 // --- LOGGER SOZLAMALARI ---
 log.transports.file.level = 'info';
@@ -25,11 +24,8 @@ function createWindow() {
   try {
     initDB();
     startServer();
-    initScheduler(); // Scheduler ishga tushirildi
     registerIpcHandlers(ipcMain); // Handlerlar ro'yxatdan o'tdi
-
-
-    log.info("Dastur ishga tushdi. Baza, Server va Scheduler yondi.");
+    log.info("Dastur ishga tushdi. Baza, Server yondi.");
   } catch (err) {
     log.error("Boshlang'ich yuklashda xato:", err);
   }

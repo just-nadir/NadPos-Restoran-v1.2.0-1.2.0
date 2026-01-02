@@ -22,7 +22,6 @@ const Sidebar = ({ activePage, onNavigate, onLogout, user, onCloseShift, syncSta
     { id: 'tables', icon: <Square />, label: "Zallar" },
     { id: 'customers', icon: <Users />, label: "Mijozlar" },
     { id: 'reports', icon: <PieChart />, label: "Xisobot" },
-    { id: 'marketing', icon: <MessageSquare />, label: "SMS" },
     { id: 'inventory', icon: <Package />, label: "Ombor" },
     { id: 'settings', icon: <Settings />, label: "Sozlama" },
   ];

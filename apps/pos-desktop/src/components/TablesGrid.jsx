@@ -126,47 +126,51 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
   return (
     <div className="flex-1 bg-background h-full flex flex-col overflow-hidden">
       {/* HEADER */}
-      <div className="p-4 border-b border-border bg-background z-10 shrink-0">
-        <div className="flex justify-between items-center mb-3">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Stollar</h1>
+      <div className="p-4 border-b border-border bg-card shrink-0 shadow-sm z-20">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-black tracking-tight text-foreground">Stollar</h1>
           <Button
             variant={showFree ? "default" : "outline"}
-            size="sm"
+            size="lg"
             onClick={() => setShowFree(!showFree)}
-            className="gap-2 text-xs"
+            className="gap-2 text-sm font-bold h-12 rounded-xl"
           >
             {showFree ? "Faqat faollar" : "Bo'sh stollar"}
           </Button>
         </div>
 
-        <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-3 mb-1 overflow-x-auto pb-2 scrollbar-hide">
           <Button
-            variant={activeHallId === 'all' ? 'default' : 'outline'}
+            variant={activeHallId === 'all' ? 'default' : 'secondary'}
             onClick={() => setActiveHallId('all')}
-            size="sm"
-            className="rounded-full px-4"
+            size="lg"
+            className={cn(
+              "rounded-full px-6 h-12 text-base font-bold transition-all shadow-sm",
+              activeHallId === 'all' ? "shadow-primary/25" : "bg-secondary hover:bg-secondary/80 text-foreground"
+            )}
           >
             Hammasi
           </Button>
           {halls.map(hall => (
             <Button
               key={hall.id}
-              variant={activeHallId === hall.id ? 'default' : 'outline'}
+              variant={activeHallId === hall.id ? 'default' : 'secondary'}
               onClick={() => setActiveHallId(hall.id)}
-              size="sm"
-              className="rounded-full whitespace-nowrap px-4"
+              size="lg"
+              className={cn(
+                "rounded-full whitespace-nowrap px-6 h-12 text-base font-bold transition-all shadow-sm",
+                activeHallId === hall.id ? "shadow-primary/25" : "bg-secondary hover:bg-secondary/80 text-foreground"
+              )}
             >
               {hall.name}
             </Button>
           ))}
         </div>
-
-
       </div>
 
       {/* LIST VIEW */}
-      <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
-        <div className="flex flex-col gap-2">
+      <div className="flex-1 overflow-y-auto p-4 scrollbar-thin bg-secondary/5">
+        <div className="flex flex-col gap-3 pb-20">
           {sortedTables.map((table) => {
             const isSelected = selectedTableId === table.id;
             const hall = halls.find(h => h.id === table.hall_id);
@@ -178,36 +182,36 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
                 onClick={() => handleTableClick(table)}
                 onDoubleClick={() => handleTableDoubleClick(table)}
                 className={cn(
-                  "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer select-none",
+                  "flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer select-none min-h-[90px]",
                   getStatusColor(table.status, isSelected),
-                  isSelected ? "shadow-md z-10 scale-[1.01]" : "shadow-sm active:scale-[0.99]"
+                  isSelected ? "shadow-lg z-10 scale-[1.01] border-primary" : "shadow-sm active:scale-[0.99] border-transparent hover:border-border"
                 )}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-5">
                   {/* Table Icon/Number Container */}
                   <div className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center font-black text-lg shadow-sm border",
+                    "w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-sm transition-colors",
                     isSelected
-                      ? "bg-background text-primary border-transparent shadow-none"
-                      : table.status === 'free' ? "bg-secondary text-muted-foreground border-transparent" : "bg-white dark:bg-slate-800 text-foreground"
+                      ? "bg-background text-primary shadow-none"
+                      : table.status === 'free' ? "bg-secondary text-muted-foreground" : "bg-white dark:bg-slate-800 text-foreground"
                   )}>
-                    {table.current_check_number > 0 ? `${table.current_check_number}` : (table.name.replace(/\D/g, '') || <Hash size={20} />)}
+                    {table.current_check_number > 0 ? `${table.current_check_number}` : (table.name.replace(/\D/g, '') || <Hash size={24} />)}
                   </div>
 
                   {/* Info */}
-                  <div className="flex flex-col">
-                    <h3 className={cn("font-bold text-lg leading-none mb-1", isSelected ? "text-primary-foreground" : "text-foreground")}>
+                  <div className="flex flex-col gap-1">
+                    <h3 className={cn("font-bold text-xl leading-none", isSelected ? "text-primary-foreground" : "text-foreground")}>
                       {displayName}
                     </h3>
-                    <div className="flex items-center gap-2 text-sm opacity-90">
+                    <div className="flex items-center gap-3 text-sm opacity-90 font-medium">
                       {table.waiter_name ? (
-                        <span className="flex items-center gap-1"><User size={12} /> {table.waiter_name}</span>
+                        <span className="flex items-center gap-1.5 p-1 px-2 rounded-md bg-white/10"><User size={14} /> {table.waiter_name}</span>
                       ) : <span className="text-xs italic opacity-70">Ofitsiant yo'q</span>}
 
                       {table.status !== 'free' && (
                         <>
                           <span className="opacity-50">•</span>
-                          <span className="flex items-center gap-1 font-mono"><Clock size={12} /> {formatTime(table.start_time)}</span>
+                          <span className="flex items-center gap-1 font-mono"><Clock size={14} /> {formatTime(table.start_time)}</span>
                         </>
                       )}
                     </div>
@@ -219,21 +223,21 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
                   {getStatusBadge(table.status)}
 
                   {table.total_amount > 0 && (
-                    <div className={cn("font-bold text-lg tabular-nums mt-1", isSelected ? "text-white" : "text-primary")}>
-                      {table.total_amount.toLocaleString()} <span className="text-sm opacity-70">so'm</span>
+                    <div className={cn("font-black text-2xl tabular-nums mt-1 tracking-tight", isSelected ? "text-white" : "text-primary")}>
+                      {table.total_amount.toLocaleString()} <span className="text-sm font-bold opacity-70">so'm</span>
                     </div>
                   )}
-                  {table.status === 'free' && <span className="text-xs text-muted-foreground opacity-50 font-medium">--</span>}
+                  {table.status === 'free' && <span className="text-sm text-muted-foreground opacity-50 font-bold">--</span>}
                 </div>
               </div>
             )
           })}
 
           {sortedTables.length === 0 && (
-            <div className="py-20 text-center text-muted-foreground flex flex-col items-center">
-              <p className="font-medium">Faol buyurtmalar yo'q</p>
+            <div className="py-20 text-center text-muted-foreground flex flex-col items-center opacity-60">
+              <p className="font-bold text-xl">Faol buyurtmalar yo'q</p>
               {!showFree && (
-                <Button variant="link" onClick={() => setShowFree(true)} className="text-primary mt-2">
+                <Button variant="link" onClick={() => setShowFree(true)} className="text-primary mt-2 text-lg">
                   + Yangi buyurtma ochish
                 </Button>
               )}

@@ -122,7 +122,7 @@ const TablesManagement = () => {
   return (
     <div className="flex w-full h-full relative bg-background">
       {/* 2-QISM: ZALLAR (SIDEBAR) */}
-      <div className="w-80 bg-card border-r border-border flex flex-col h-full z-10 shadow-sm">
+      <div className="w-80 bg-card border-r border-border flex flex-col h-full z-10 shadow-sm transition-all duration-300">
         <div className="p-6 border-b border-border flex justify-between items-center bg-card">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Layout className="text-primary" size={24} />
@@ -131,54 +131,55 @@ const TablesManagement = () => {
           <Button
             size="icon"
             variant="ghost"
-            className="rounded-full hover:bg-secondary text-primary hover:text-primary"
+            className="rounded-full w-12 h-12 hover:bg-secondary active:scale-95 transition-transform"
             onClick={() => setIsAddingHall(true)}
           >
-            <Plus size={24} />
+            <Plus className="text-primary" size={28} />
           </Button>
         </div>
 
         {isAddingHall && (
-          <form onSubmit={handleAddHall} className="p-4 bg-secondary/10 border-b border-border animate-in slide-in-from-top">
+          <form onSubmit={handleAddHall} className="p-4 bg-secondary/10 border-b border-border animate-in slide-in-from-top duration-300">
             <input
               autoFocus
               type="text"
               placeholder="Zal nomi..."
               value={newHallName}
               onChange={(e) => setNewHallName(e.target.value)}
-              className="w-full p-3 rounded-xl border border-border bg-background focus:border-primary outline-none mb-3 text-lg text-foreground shadow-sm"
+              className="w-full p-4 rounded-xl border border-border bg-background focus:border-primary outline-none mb-3 text-lg text-foreground shadow-sm"
             />
-            <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={() => setIsAddingHall(false)} className="flex-1 text-muted-foreground hover:text-foreground">Bekor</Button>
-              <Button type="submit" className="flex-1">Qo'shish</Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" size="lg" onClick={() => setIsAddingHall(false)} className="flex-1 h-12 text-muted-foreground font-bold">Bekor</Button>
+              <Button type="submit" size="lg" className="flex-1 h-12 font-bold shadow-md shadow-primary/20">Qo'shish</Button>
             </div>
           </form>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {halls.map(hall => (
             <div key={hall.id} className="relative group">
               <div
                 onClick={() => setActiveHall(hall.id)}
                 className={cn(
-                  "w-full px-5 py-4 rounded-xl font-bold text-lg transition-all cursor-pointer flex items-center justify-between shadow-sm border border-transparent",
+                  "w-full px-5 py-4 rounded-2xl font-bold text-lg transition-all cursor-pointer flex items-center justify-between min-h-[64px] shadow-sm select-none active:scale-[0.98]",
                   activeHall === hall.id
-                    ? "bg-primary text-primary-foreground shadow-md border-primary/20 scale-[1.02]"
-                    : "bg-card hover:bg-secondary text-muted-foreground hover:text-foreground border-border"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 translate-x-1"
+                    : "bg-background text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent hover:border-border"
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <MapPin size={20} className={activeHall === hall.id ? 'opacity-100' : 'opacity-50'} />
-                  <span className="truncate">{hall.name}</span>
+                  <MapPin size={24} className={activeHall === hall.id ? 'opacity-100' : 'opacity-50'} />
+                  <span className="truncate tracking-wide">{hall.name}</span>
                 </div>
 
                 {/* Delete Button */}
                 {activeHall === hall.id && (
                   <button
                     onClick={(e) => { e.stopPropagation(); confirmDeleteHall(hall.id); }}
-                    className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
+                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl text-white transition-colors active:scale-90"
+                    title="O'chirish"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={20} />
                   </button>
                 )}
               </div>
@@ -190,41 +191,41 @@ const TablesManagement = () => {
       {/* 3-QISM: STOLLAR (CONTENT) */}
       <div className="flex-1 bg-background flex flex-col h-full overflow-hidden relative">
         {/* Header */}
-        <div className="bg-card px-8 py-5 border-b border-border flex justify-between items-center shadow-sm z-20">
+        <div className="bg-card px-8 py-6 border-b border-border flex justify-between items-center shadow-sm z-20 sticky top-0">
           <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <h1 className="text-3xl font-black text-foreground flex items-center gap-3 tracking-tight">
               {activeHallObj?.name || "Zallar"}
-              {activeHallObj && <span className="text-sm font-medium px-3 py-1 bg-secondary text-muted-foreground rounded-full">{tables.length} ta stol</span>}
+              {activeHallObj && <span className="text-sm font-bold px-3 py-1 bg-secondary text-foreground rounded-full border border-border">{tables.length} ta stol</span>}
             </h1>
           </div>
 
           {activeHall && (
-            <Button onClick={() => setIsModalOpen(true)} size="lg" className="rounded-xl shadow-lg gap-2 text-lg h-12 px-6">
+            <Button onClick={() => setIsModalOpen(true)} size="lg" className="rounded-2xl shadow-xl shadow-primary/20 gap-3 h-14 px-8 text-lg font-bold hover:scale-105 transition-transform">
               <Plus size={24} /> Yangi Stol
             </Button>
           )}
         </div>
 
         {/* Grid */}
-        <div className="flex-1 overflow-y-auto p-8 bg-secondary/5">
+        <div className="flex-1 overflow-y-auto p-8 bg-secondary/5 scrollbar-thin">
           {activeHall ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
               {tables.map(table => (
                 <div
                   key={table.id}
-                  className="bg-card dark:bg-card p-6 rounded-3xl shadow-sm border border-border hover:border-primary/50 hover:shadow-md transition-all group flex flex-col items-center justify-center text-center relative aspect-[4/3] cursor-pointer"
+                  className="bg-card dark:bg-card p-6 rounded-3xl shadow-sm border border-border hover:border-primary/50 hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center relative aspect-square cursor-pointer active:scale-[0.98]"
                 >
-                  <div className="mb-4 p-4 rounded-full bg-secondary/30 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                    <Square size={32} strokeWidth={2.5} />
+                  <div className="mb-4 p-5 rounded-full bg-secondary/50 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                    <Square size={40} strokeWidth={2.5} />
                   </div>
-                  <h3 className="font-bold text-foreground text-2xl mb-1">{table.name}</h3>
-                  <div className="text-muted-foreground text-sm flex items-center gap-1 font-medium bg-secondary/20 px-2 py-0.5 rounded-md">
-                    <Armchair size={14} /> Standard
+                  <h3 className="font-bold text-foreground text-3xl mb-2 tracking-tight">{table.name}</h3>
+                  <div className="text-muted-foreground text-sm flex items-center gap-1.5 font-medium bg-secondary/50 px-3 py-1 rounded-lg">
+                    <Armchair size={16} /> Standard
                   </div>
 
                   <button
-                    onClick={() => confirmDeleteTable(table.id)}
-                    className="absolute top-3 right-3 p-2 rounded-xl text-muted-foreground hover:bg-destructive hover:text-white opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100"
+                    onClick={(e) => { e.stopPropagation(); confirmDeleteTable(table.id); }}
+                    className="absolute top-4 right-4 p-3 rounded-2xl text-muted-foreground bg-secondary/30 hover:bg-destructive hover:text-white transition-all active:scale-95"
                     title="Stolni o'chirish"
                   >
                     <Trash2 size={20} />
@@ -235,16 +236,16 @@ const TablesManagement = () => {
               {/* Empty State */}
               {tables.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-3xl bg-card/50">
-                  <Layout size={64} className="mb-4 opacity-20" strokeWidth={1} />
-                  <p className="text-xl font-medium">Bu zalda stollar yo'q</p>
-                  <p className="text-sm opacity-60">"Yangi Stol" tugmasini bosib qo'shing</p>
+                  <Layout size={80} className="mb-6 opacity-20 stroke-1" />
+                  <p className="text-2xl font-bold">Bu zalda stollar yo'q</p>
+                  <p className="text-lg opacity-60 mt-2">"Yangi Stol" tugmasini bosib qo'shing</p>
                 </div>
               )}
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-              <MapPin size={80} className="mb-6 opacity-20 animate-bounce" strokeWidth={1} />
-              <p className="text-2xl font-medium">Ishlash uchun chap tomondan zalni tanlang</p>
+              <MapPin size={96} className="mb-8 opacity-20 animate-bounce stroke-1" />
+              <p className="text-3xl font-bold">Ishlash uchun chap tomondan zalni tanlang</p>
             </div>
           )}
         </div>

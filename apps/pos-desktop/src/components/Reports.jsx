@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
+  PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import {
   LayoutDashboard, Users, UtensilsCrossed, History, Calendar,
-  Download, Filter, TrendingUp, DollarSign, CreditCard,
-  ShoppingBag, Search, ChevronRight, ArrowUpRight, ArrowDownRight, Trash2, Send
+  Filter, TrendingUp, DollarSign, CreditCard,
+  ShoppingBag, Trash2, ArrowUpRight, ArrowDownRight, Printer
 } from 'lucide-react';
 import { useGlobal } from '../context/GlobalContext';
 import { formatDate, formatTime, formatDateTime } from '../utils/dateUtils';
+import { cn } from '../utils/cn';
+import { Button } from './ui/button';
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']; // Moviy, Yashil, Sariq, Qizil, Binafsha
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1'];
 
-// YANGI: Bugungi sanani olish funksiyasi
 const getTodayDate = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -22,21 +23,36 @@ const getTodayDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+// Custom Tooltip for Charts
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-popover border border-border p-3 rounded-xl shadow-xl text-popover-foreground text-sm">
+        <p className="font-bold mb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ color: entry.color }} className="font-medium text-xs">
+            {entry.name}: {entry.value.toLocaleString()}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 const Reports = () => {
-  const { settings, showToast } = useGlobal(); // <-- Global settings & Toast
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, staff, products, history, trash
+  const { settings, showToast } = useGlobal();
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [salesData, setSalesData] = useState([]);
-  const [trendData, setTrendData] = useState([]); // YANGI
+  const [trendData, setTrendData] = useState([]);
   const [cancelledData, setCancelledData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // YANGILANDI: Default qiymat har safar bugungi sana
   const [dateRange, setDateRange] = useState({
     startDate: getTodayDate(),
     endDate: getTodayDate()
   });
 
-  // --- DATA LOADING ---
   useEffect(() => {
     loadData();
   }, [dateRange]);
@@ -54,7 +70,7 @@ const Reports = () => {
       const [sData, cData, tData] = await Promise.all([
         ipcRenderer.invoke('get-sales', range),
         ipcRenderer.invoke('get-cancelled-orders', range),
-        ipcRenderer.invoke('get-sales-trend') // 30 kunlik
+        ipcRenderer.invoke('get-sales-trend')
       ]);
 
       setSalesData(sData || []);
@@ -67,48 +83,7 @@ const Reports = () => {
     }
   };
 
-  // --- EXPORT TO CSV ---
-  const handleTelegramSend = async () => {
-    try {
-      if (!window.electron) return;
-      // Bugungi sana bo'lsa "Bugungi hisobot", boshqa sana bo'lsa o'sha kun
-      const dateToSend = dateRange.endDate;
-      await window.electron.ipcRenderer.invoke('telegram-send-report', dateToSend);
-      showToast('success', "Hisobot Telegramga yuborildi!");
-    } catch (error) {
-      showToast('error', error.message);
-    }
-  };
-
-  const exportToCSV = () => {
-    if (salesData.length === 0) return;
-
-    let headers = "ID,Sana,Vaqt,Stol,Ofitsiant,Mehmonlar,To'lov Turi,Summa\n";
-    let csvContent = salesData.map(sale => {
-      const date = new Date(sale.date);
-      return [
-        sale.check_number || sale.id,
-        formatDate(date),
-        formatTime(date),
-        `"${sale.items_json ? JSON.parse(sale.items_json)[0]?.destination || 'Stol' : 'Stol'}"`, // Stol raqami json ichida bo'lmasa oddiy
-        `"${sale.waiter_name || 'Kassir'}"`,
-        sale.guest_count || 0,
-        sale.payment_method,
-        sale.total_amount
-      ].join(",");
-    }).join("\n");
-
-    const blob = new Blob([headers + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `hisobot_${dateRange.startDate}_${dateRange.endDate}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // --- ANALYTICS CALCULATIONS (useMemo for performance) ---
+  // --- ANALYTICS ---
   const stats = useMemo(() => {
     let totalRevenue = 0;
     let totalOrders = salesData.length;
@@ -120,41 +95,28 @@ const Reports = () => {
     salesData.forEach(sale => {
       const amount = sale.total_amount || 0;
       totalRevenue += amount;
-
-      // Xizmat haqi (Service Charge) ni hisoblash
-      // Formula: Service = Total - Subtotal + Discount
-      const subtotal = sale.subtotal || amount; // Ehtiyot shart
+      const subtotal = sale.subtotal || amount;
       const discount = sale.discount || 0;
       const serviceCharge = amount - subtotal + discount;
 
-      // Payment Method Stats
       const method = sale.payment_method || 'naqd';
       methodMap[method] = (methodMap[method] || 0) + amount;
 
-      // Waiter Stats (Updated)
       const waiter = sale.waiter_name || "Noma'lum";
       if (!waiterMap[waiter]) {
-        waiterMap[waiter] = {
-          name: waiter,
-          revenue: 0,
-          count: 0,
-          guests: 0, // Mehmonlar soni
-          service: 0 // Xizmat haqi
-        };
+        waiterMap[waiter] = { name: waiter, revenue: 0, count: 0, guests: 0, service: 0 };
       }
       waiterMap[waiter].revenue += amount;
       waiterMap[waiter].count += 1;
       waiterMap[waiter].guests += (sale.guest_count || 0);
       waiterMap[waiter].service += serviceCharge;
 
-      // Hourly Stats
       const hour = new Date(sale.date).getHours();
       if (hourlyMap[hour]) {
         hourlyMap[hour].amount += amount;
         hourlyMap[hour].count += 1;
       }
 
-      // Product Stats
       try {
         const items = JSON.parse(sale.items_json || '[]');
         items.forEach(item => {
@@ -170,7 +132,7 @@ const Reports = () => {
       totalRevenue,
       totalOrders,
       avgCheck: totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0,
-      paymentMethods: Object.entries(methodMap).map(([name, value]) => ({ name, value })),
+      paymentMethods: Object.entries(methodMap).map(([name, value]) => ({ name: name === 'cash' ? 'Naqd' : name === 'card' ? 'Karta' : name === 'debt' ? 'Nasiya' : name, value })),
       waiters: Object.values(waiterMap).sort((a, b) => b.revenue - a.revenue),
       products: Object.values(productMap).sort((a, b) => b.qty - a.qty),
       hourlySales: hourlyMap
@@ -179,54 +141,109 @@ const Reports = () => {
 
   // --- RENDERERS ---
 
-  // 1. DASHBOARD TAB
+  // --- SORTING STATE ---
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+  // Reset sort when tab changes
+  useEffect(() => {
+    setSortConfig({ key: null, direction: 'asc' });
+  }, [activeTab]);
+
+  const handleSort = (key) => {
+    setSortConfig((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const getSortedData = (data, config) => {
+    if (!config.key) return data;
+
+    return [...data].sort((a, b) => {
+      let aValue = a[config.key];
+      let bValue = b[config.key];
+
+      // Handle nested values or special keys if needed (e.g. date string vs object)
+      // Custom sorting for specific fields can be handled here or by normalizing data before
+
+      if (aValue === undefined || aValue === null) return 1;
+      if (bValue === undefined || bValue === null) return -1;
+
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) return config.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return config.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
+  // --- RENDERERS ---
+
+  const KPICard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }) => (
+    <div className={cn(
+      "bg-card p-6 rounded-2xl border border-border shadow-sm flex justify-between items-start hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2",
+      `delay-[${delay}ms]`
+    )}>
+      <div>
+        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
+        <h3 className="text-3xl font-black text-foreground">{value}</h3>
+        {subValue && <p className="text-xs text-muted-foreground mt-1 font-medium">{subValue}</p>}
+      </div>
+      <div className={cn("p-3 rounded-xl", colorClass)}>
+        <Icon size={24} />
+      </div>
+    </div>
+  );
+
   const renderDashboard = () => (
-    <div className="space-y-4 animate-in fade-in duration-300">
+    <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
-          <div>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Jami Savdo</p>
-            <h3 className="text-2xl font-black text-gray-800 mt-1">{stats.totalRevenue.toLocaleString()} <span className="text-xs text-gray-400 font-normal">so'm</span></h3>
-          </div>
-          <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><DollarSign size={20} /></div>
-        </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
-          <div>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Cheklar Soni</p>
-            <h3 className="text-2xl font-black text-gray-800 mt-1">{stats.totalOrders} <span className="text-xs text-gray-400 font-normal">ta</span></h3>
-          </div>
-          <div className="p-2 bg-green-50 text-green-600 rounded-xl"><ShoppingBag size={20} /></div>
-        </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start sm:col-span-2 lg:col-span-1">
-          <div>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">O'rtacha Chek</p>
-            <h3 className="text-2xl font-black text-gray-800 mt-1">{stats.avgCheck.toLocaleString()} <span className="text-xs text-gray-400 font-normal">so'm</span></h3>
-          </div>
-          <div className="p-2 bg-orange-50 text-orange-600 rounded-xl"><TrendingUp size={20} /></div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <KPICard
+          title="Jami Savdo"
+          value={`${stats.totalRevenue.toLocaleString()} so'm`}
+          icon={DollarSign}
+          colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+        />
+        <KPICard
+          title="Cheklar Soni"
+          value={stats.totalOrders}
+          subValue="ta savdo qilindi"
+          icon={ShoppingBag}
+          colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
+          delay={100}
+        />
+        <KPICard
+          title="O'rtacha Chek"
+          value={`${stats.avgCheck.toLocaleString()} so'm`}
+          icon={TrendingUp}
+          colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
+          delay={200}
+        />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 h-auto">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Hourly Trend */}
-        <div className="xl:col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-80">
-          <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm">
-            <Calendar size={16} /> Soatbay Savdo Dinamikasi
+        <div className="xl:col-span-2 bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-[400px]">
+          <h3 className="font-bold text-foreground mb-6 flex items-center gap-2">
+            <Calendar size={18} className="text-primary" /> Soatbay Savdo Dinamikasi
           </h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats.hourlySales}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} tick={{ fontSize: 10 }} />
-                <YAxis tickFormatter={(val) => `${val / 1000}k`} tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(val) => val.toLocaleString() + " so'm"} labelFormatter={(label) => `${label}:00`} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
+                <YAxis tickFormatter={(val) => `${val / 1000}k`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
+                <Tooltip content={<CustomTooltip />} />
                 <Area type="monotone" dataKey="amount" stroke="#3B82F6" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
@@ -234,9 +251,9 @@ const Reports = () => {
         </div>
 
         {/* Payment Methods */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-80">
-          <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2 text-sm">
-            <CreditCard size={16} /> To'lov Turlari
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-[400px]">
+          <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
+            <CreditCard size={18} className="text-primary" /> To'lov Turlari
           </h3>
           <div className="flex-1 w-full min-h-0 relative">
             <ResponsiveContainer width="100%" height="100%">
@@ -245,24 +262,24 @@ const Reports = () => {
                   data={stats.paymentMethods}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
+                  innerRadius={60}
+                  outerRadius={90}
                   paddingAngle={5}
                   dataKey="value"
+                  stroke="none"
                 >
                   {stats.paymentMethods.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(val) => val.toLocaleString() + " so'm"} />
-                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '10px' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
-            {/* Center Text */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-8">
               <div className="text-center">
-                <span className="text-[10px] text-gray-400 font-bold block">JAMI</span>
-                <span className="text-xs font-bold text-gray-800">{stats.totalRevenue.toLocaleString()}</span>
+                <span className="text-[10px] text-muted-foreground font-bold block uppercase">JAMI</span>
+                <span className="text-lg font-black text-foreground">{stats.totalRevenue.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -270,18 +287,18 @@ const Reports = () => {
       </div>
 
       {/* Sales Trend (30 Days) */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-64 mt-4">
-        <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm">
-          <Calendar size={16} /> Oxirgi 30 kunlik dinamika
+      <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-[350px]">
+        <h3 className="font-bold text-foreground mb-6 flex items-center gap-2">
+          <TrendingUp size={18} className="text-primary" /> Oxirgi 30 kunlik dinamika
         </h3>
         <div className="flex-1 w-full min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="day" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 10 }} />
-              <YAxis tickFormatter={(val) => `${val / 1000}k`} tick={{ fontSize: 10 }} />
-              <Tooltip formatter={(val) => val.toLocaleString() + " so'm"} labelFormatter={(label) => label} />
-              <Bar dataKey="total" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="day" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
+              <YAxis tickFormatter={(val) => `${val / 1000}k`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.3)' }} />
+              <Bar dataKey="total" fill="#3B82F6" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -289,256 +306,276 @@ const Reports = () => {
     </div>
   );
 
-  // 2. STAFF TAB (YANGILANDI)
-  const renderStaff = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
-      <table className="w-full text-left">
-        <thead className="bg-gray-50 border-b border-gray-200">
-          <tr>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Ofitsiant Ismi</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm text-center">Cheklar</th>
-            {/* Agar percent bo'lsa mehmonlar soni ko'rsatilmaydi */}
-            {settings.serviceChargeType === 'fixed' && (
-              <th className="px-6 py-4 font-bold text-gray-600 text-sm text-center">Mehmonlar</th>
-            )}
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm text-right">Xizmat Haqi</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm text-right">Jami Savdo</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {stats.waiters.map((w, i) => (
-            <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-              <td className="px-6 py-4 font-bold text-gray-800 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
-                  {w.name.charAt(0)}
-                </div>
-                {w.name}
-              </td>
-              <td className="px-6 py-4 text-center text-gray-600">{w.count} ta</td>
-              {settings.serviceChargeType === 'fixed' && (
-                <td className="px-6 py-4 text-center font-bold text-blue-600">{w.guests} kishi</td>
-              )}
-              <td className="px-6 py-4 text-right font-medium text-orange-600">{Math.round(w.service).toLocaleString()}</td>
-              <td className="px-6 py-4 text-right font-bold text-gray-800">{w.revenue.toLocaleString()}</td>
-            </tr>
-          ))}
-          {stats.waiters.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-gray-400">Ma'lumot yo'q</td></tr>}
-        </tbody>
-      </table>
-    </div>
-  );
+  const SortableTable = ({ columns, data, emptyMessage }) => {
+    const sortedData = getSortedData(data, sortConfig);
 
-  // 3. PRODUCTS TAB
-  const renderProducts = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
-      <table className="w-full text-left">
-        <thead className="bg-gray-50 border-b border-gray-200">
-          <tr>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Taom Nomi</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm text-center">Sotildi (soni)</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm text-right">Jami Tushum</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {stats.products.map((p, i) => (
-            <tr key={i} className="hover:bg-blue-50/50 transition-colors group">
-              <td className="px-6 py-4 font-bold text-gray-800 flex items-center gap-2">
-                <span className="text-gray-300 w-6 text-sm group-hover:text-blue-500 font-mono">#{i + 1}</span>
-                {p.name}
-              </td>
-              <td className="px-6 py-4 text-center text-gray-600 font-medium">{p.qty}</td>
-              <td className="px-6 py-4 text-right font-bold text-blue-600">{p.revenue.toLocaleString()}</td>
-            </tr>
-          ))}
-          {stats.products.length === 0 && <tr><td colSpan="3" className="p-8 text-center text-gray-400">Ma'lumot yo'q</td></tr>}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  // 4. HISTORY TAB
-  const renderHistory = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
-      <table className="w-full text-left">
-        <thead className="bg-gray-50 border-b border-gray-200">
-          <tr>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm w-20">#Chek</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Vaqt</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Ofitsiant</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Mehmon</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Mijoz</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm">To'lov</th>
-            <th className="px-6 py-4 font-bold text-gray-600 text-sm text-right">Summa</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {salesData.map((sale) => (
-            <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 font-mono text-gray-500 text-sm">#{sale.check_number || sale.id}</td>
-              <td className="px-6 py-4 text-sm text-gray-600">
-                <div className="font-bold text-gray-800">{formatTime(sale.date)}</div>
-                <div className="text-xs text-gray-400">{formatDate(sale.date)}</div>
-              </td>
-              <td className="px-6 py-4 font-medium text-gray-800">{sale.waiter_name || "Kassir"}</td>
-              <td className="px-6 py-4 text-center text-sm font-bold text-blue-600">{sale.guest_count || '-'}</td>
-              <td className="px-6 py-4 text-sm text-gray-600">{sale.customer_id ? "Mijoz (ID: " + sale.customer_id + ")" : "-"}</td>
-              <td className="px-6 py-4">
-                <span className={`px-2 py-1 rounded text-xs font-bold uppercase
-                  ${sale.payment_method === 'cash' ? 'bg-green-100 text-green-700' :
-                    sale.payment_method === 'card' ? 'bg-blue-100 text-blue-700' :
-                      sale.payment_method === 'debt' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
-                  {sale.payment_method || 'Naqd'}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-right font-black text-gray-800">{sale.total_amount?.toLocaleString()}</td>
-            </tr>
-          ))}
-          {salesData.length === 0 && <tr><td colSpan="7" className="p-8 text-center text-gray-400">Hech qanday savdo tarixi yo'q</td></tr>}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  // 5. CANCELLED ORDERS TAB
-  const renderCancelledOrders = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
-      <table className="w-full text-left">
-        <thead className="bg-red-50 border-b border-gray-200">
-          <tr>
-            <th className="px-6 py-4 font-bold text-red-600 text-sm w-20">ID</th>
-            <th className="px-6 py-4 font-bold text-red-600 text-sm">Vaqt</th>
-            <th className="px-6 py-4 font-bold text-red-600 text-sm">Ofitsiant</th>
-            <th className="px-6 py-4 font-bold text-red-600 text-sm">Sabab</th>
-            <th className="px-6 py-4 font-bold text-red-600 text-sm">Tarkibi</th>
-            <th className="px-6 py-4 font-bold text-red-600 text-sm text-right">Summa</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {cancelledData.map((order) => {
-            let items = [];
-            try { items = JSON.parse(order.items_json); } catch (e) { }
-            return (
-              <tr key={order.id} className="hover:bg-red-50 transition-colors">
-                <td className="px-6 py-4 font-mono text-gray-500 text-sm">#{order.table_id}</td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  <div className="font-bold text-gray-800">{formatTime(order.date)}</div>
-                  <div className="text-xs text-gray-400">{formatDate(order.date)}</div>
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-800">{order.waiter_name}</td>
-                <td className="px-6 py-4 text-sm text-red-500 font-medium italic">"{order.reason}"</td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs break-words">
-                  {items.map(i => `${i.product_name || i.name} x${i.quantity || i.qty}`).join(', ')}
-                </td>
-                <td className="px-6 py-4 text-right font-black text-gray-800">{order.total_amount?.toLocaleString()}</td>
+    return (
+      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm animate-in fade-in duration-300">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                {columns.map((col, i) => (
+                  <th
+                    key={i}
+                    className={cn(
+                      "px-6 py-4 font-bold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:bg-muted/80 transition-colors select-none group",
+                      col.className
+                    )}
+                    onClick={() => col.key && handleSort(col.key)}
+                  >
+                    <div className={cn("flex items-center gap-2", col.headerAlign || "justify-start")}>
+                      {col.label}
+                      {col.key && (
+                        <div className="flex flex-col opacity-0 group-hover:opacity-50 data-[active=true]:opacity-100" data-active={sortConfig.key === col.key}>
+                          {sortConfig.key === col.key && sortConfig.direction === 'desc' ? (
+                            <ArrowDownRight size={14} className="text-primary" />
+                          ) : sortConfig.key === col.key && sortConfig.direction === 'asc' ? (
+                            <ArrowUpRight size={14} className="text-primary" />
+                          ) : (
+                            <ArrowUpRight size={14} />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </th>
+                ))}
               </tr>
-            );
-          })}
-          {cancelledData.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">Bekor qilingan buyurtmalar yo'q</td></tr>}
-        </tbody>
-      </table>
-    </div>
-  );
+            </thead>
+            <tbody className="divide-y divide-border">
+              {sortedData.length > 0 ? sortedData.map((row, rowIndex) => (
+                <tr key={rowIndex} className="hover:bg-muted/50 transition-colors">
+                  {columns.map((col, colIndex) => (
+                    <td key={colIndex} className={cn("px-6 py-4", col.cellClassName)}>
+                      {col.render ? col.render(row, rowIndex) : row[col.key]}
+                    </td>
+                  ))}
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={columns.length} className="p-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <History size={48} strokeWidth={1} className="opacity-20" />
+                      <p>{emptyMessage}</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStaff = () => {
+    const columns = [
+      {
+        label: "Ofitsiant Ismi",
+        key: "name",
+        render: (w) => (
+          <div className="font-bold text-foreground flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+              {w.name.charAt(0)}
+            </div>
+            {w.name}
+          </div>
+        )
+      },
+      { label: "Cheklar", key: "count", className: "text-center", headerAlign: "justify-center", cellClassName: "text-center text-muted-foreground font-medium", render: (w) => `${w.count} ta` },
+      settings.serviceChargeType === 'fixed' ? { label: "Mehmonlar", key: "guests", className: "text-center", headerAlign: "justify-center", cellClassName: "text-center font-bold text-primary", render: (w) => `${w.guests} kishi` } : null,
+      { label: "Xizmat Haqi", key: "service", className: "text-right", headerAlign: "justify-end", cellClassName: "text-right font-medium text-orange-500", render: (w) => Math.round(w.service).toLocaleString() },
+      { label: "Jami Savdo", key: "revenue", className: "text-right", headerAlign: "justify-end", cellClassName: "text-right font-bold text-foreground", render: (w) => w.revenue.toLocaleString() }
+    ].filter(Boolean);
+
+    return <SortableTable columns={columns} data={stats.waiters} emptyMessage="Xodimlar bo'yicha ma'lumot yo'q" />;
+  };
+
+  const renderProducts = () => {
+    const columns = [
+      {
+        label: "Taom Nomi",
+        key: "name",
+        render: (p, i) => (
+          <div className="font-bold text-foreground flex items-center gap-3">
+            <span className="text-muted-foreground/50 w-6 text-sm font-mono">#{i + 1}</span>
+            {p.name}
+          </div>
+        )
+      },
+      { label: "Sotildi (soni)", key: "qty", className: "text-center", headerAlign: "justify-center", cellClassName: "text-center text-muted-foreground font-medium" },
+      { label: "Jami Tushum", key: "revenue", className: "text-right", headerAlign: "justify-end", cellClassName: "text-right font-bold text-primary", render: (p) => p.revenue.toLocaleString() }
+    ];
+    return <SortableTable columns={columns} data={stats.products} emptyMessage="Mahsulotlar bo'yicha ma'lumot yo'q" />;
+  };
+
+  const renderHistory = () => {
+    const columns = [
+      { label: "#Chek", key: "check_number", className: "w-24", cellClassName: "font-mono text-muted-foreground text-sm", render: (s) => `#${s.check_number || s.id}` },
+      {
+        label: "Vaqt",
+        key: "date",
+        render: (s) => (
+          <div className="text-sm">
+            <div className="font-bold text-foreground">{formatTime(s.date)}</div>
+            <div className="text-xs text-muted-foreground">{formatDate(s.date)}</div>
+          </div>
+        )
+      },
+      { label: "Ofitsiant", key: "waiter_name", cellClassName: "font-medium text-foreground", render: (s) => s.waiter_name || "Kassir" },
+      { label: "Mehmon", key: "guest_count", className: "text-center", headerAlign: "justify-center", cellClassName: "text-center text-sm font-bold text-primary", render: (s) => s.guest_count || '-' },
+      { label: "Mijoz", key: "customer_id", cellClassName: "text-sm text-muted-foreground", render: (s) => s.customer_id ? "Mijoz mavjud" : "-" },
+      {
+        label: "To'lov Turi",
+        key: "payment_method",
+        render: (s) => (
+          <span className={cn(
+            "px-2.5 py-1 rounded-md text-xs font-bold uppercase border",
+            s.payment_method === 'cash' ? "bg-green-500/10 text-green-600 border-green-500/20" :
+              s.payment_method === 'card' ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
+                s.payment_method === 'debt' ? "bg-red-500/10 text-red-600 border-red-500/20" : "bg-secondary text-muted-foreground border-border"
+          )}>
+            {s.payment_method === 'cash' ? 'Naqd' : s.payment_method === 'card' ? 'Karta' : s.payment_method === 'debt' ? 'Nasiya' : s.payment_method}
+          </span>
+        )
+      },
+      { label: "Summa", key: "total_amount", className: "text-right", headerAlign: "justify-end", cellClassName: "text-right font-black text-foreground", render: (s) => s.total_amount?.toLocaleString() }
+
+    ];
+    return <SortableTable columns={columns} data={salesData} emptyMessage="Hech qanday savdo tarixi yo'q" />;
+  };
+
+  const renderCancelledOrders = () => {
+    // Need to normalize data slightly for cleaner sorting if needed, but table_id work
+    const columns = [
+      { label: "Nomi", key: "table_id", className: "w-24", cellClassName: "font-mono text-muted-foreground text-sm" },
+      {
+        label: "Vaqt",
+        key: "date",
+        render: (order) => (
+          <div className="text-sm">
+            <div className="font-bold text-foreground">{formatTime(order.date)}</div>
+            <div className="text-xs text-muted-foreground">{formatDate(order.date)}</div>
+          </div>
+        )
+      },
+      { label: "Ofitsiant", key: "waiter_name", cellClassName: "font-medium text-foreground" },
+      { label: "Sabab", key: "reason", cellClassName: "text-sm text-destructive font-medium italic", render: (o) => `"${o.reason}"` },
+      {
+        label: "Tarkibi",
+        key: "items_json", // Sort by json string... not ideal but workable, or custom sort logic
+        cellClassName: "text-sm text-foreground max-w-xs break-words",
+        render: (order) => {
+          let items = [];
+          try { items = JSON.parse(order.items_json); } catch (e) { }
+          return items.map(i => `${i.product_name || i.name} x${i.quantity || i.qty}`).join(', ');
+        }
+      },
+      { label: "Summa", key: "total_amount", className: "text-right", headerAlign: "justify-end", cellClassName: "text-right font-black text-foreground", render: (o) => o.total_amount?.toLocaleString() }
+    ];
+    return <SortableTable columns={columns} data={cancelledData} emptyMessage="Bekor qilingan buyurtmalar yo'q" />;
+  };
 
   return (
-    <div className="flex w-full h-full bg-gray-100 font-sans">
+    <div className="flex w-full h-full bg-background font-sans relative">
       {/* SIDEBAR FILTERS */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full shadow-sm z-20 shrink-0">
-        <div className="p-6 pb-2">
-          <h2 className="text-2xl font-black text-gray-800 mb-1">Xisobotlar</h2>
-          <p className="text-xs text-gray-400 font-medium">Boshqaruv va Tahlil</p>
+      <div className="w-80 bg-card border-r border-border flex flex-col h-full shadow-sm z-20 shrink-0 transition-all">
+        <div className="p-6 pb-2 border-b border-border/50">
+          <h2 className="text-3xl font-black text-foreground mb-1 tracking-tight">Hisobotlar</h2>
+          <p className="text-sm text-muted-foreground font-bold">Boshqaruv va Tahlil</p>
         </div>
 
-        <div className="px-4 py-2">
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
-            <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wider flex items-center gap-1">
-              <Calendar size={12} /> Sana Oralig'i
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+          <div className="bg-secondary/10 p-5 rounded-2xl border border-border">
+            <p className="text-xs font-black text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+              <Calendar size={14} /> Sana Oralig'i
             </p>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <input
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-                className="w-full p-2.5 rounded-lg border border-gray-200 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full h-12 px-4 rounded-xl border border-border bg-card text-lg font-bold text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
               />
               <input
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-                className="w-full p-2.5 rounded-lg border border-gray-200 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full h-12 px-4 rounded-xl border border-border bg-card text-lg font-bold text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
               />
             </div>
-            <button onClick={loadData} disabled={loading} className="w-full mt-3 bg-gray-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-gray-800 flex items-center justify-center gap-2 active:scale-95 transition-transform">
-              {loading ? "Yuklanmoqda..." : <><Filter size={16} /> Yangilash</>}
-            </button>
+            <Button
+              onClick={loadData}
+              disabled={loading}
+              className="w-full mt-5 font-bold h-12 text-lg shadow-lg shadow-primary/20 active:scale-95"
+            >
+              {loading ? "Yuklanmoqda..." : <><Filter size={20} className="mr-2" /> Yangilash</>}
+            </Button>
           </div>
 
-          <div className="space-y-1">
-            <button onClick={() => setActiveTab('dashboard')} className={`w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}>
-              <LayoutDashboard size={20} /> Umumiy Ko'rsatkich
-            </button>
-            <button onClick={() => setActiveTab('staff')} className={`w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${activeTab === 'staff' ? 'bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}>
-              <Users size={20} /> Xodimlar Statistikasi
-            </button>
-            <button onClick={() => setActiveTab('products')} className={`w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${activeTab === 'products' ? 'bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}>
-              <UtensilsCrossed size={20} /> Menyu Tahlili
-            </button>
-            <button onClick={() => setActiveTab('history')} className={`w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${activeTab === 'history' ? 'bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}>
-              <History size={20} /> Tranzaksiyalar
-            </button>
-            <button onClick={() => setActiveTab('trash')} className={`w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${activeTab === 'trash' ? 'bg-red-50 text-red-600 shadow-sm ring-1 ring-red-100' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}>
-              <Trash2 size={20} /> Bekor Qilinganlar
-            </button>
+          <div className="space-y-2">
+            {[
+              { id: 'dashboard', icon: LayoutDashboard, label: "Umumiy" },
+              { id: 'staff', icon: Users, label: "Xodimlar" },
+              { id: 'products', icon: UtensilsCrossed, label: "Menyu" },
+              { id: 'history', icon: History, label: "Tranzaksiyalar" },
+              { id: 'trash', icon: Trash2, label: "Bekor Qilingan" },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "w-full text-left px-5 h-14 rounded-2xl font-bold text-lg flex items-center gap-4 transition-all",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 translate-x-1"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:translate-x-1"
+                )}
+              >
+                <tab.icon size={24} strokeWidth={2.5} /> {tab.label}
+              </button>
+            ))}
           </div>
-        </div>
-
-        <div className="mt-auto p-4 border-t border-gray-100">
-          <button onClick={exportToCSV} className="w-full border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 hover:text-gray-800 hover:border-gray-300 flex items-center justify-center gap-2 transition-colors">
-            <Download size={18} /> Excelga Yuklash
-          </button>
-
-          <button onClick={handleTelegramSend} className="w-full mt-3 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transition-colors active:scale-95">
-            <Send size={18} /> Telegramga Yuborish
-          </button>
         </div>
       </div>
 
       {/* CONTENT AREA */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* Header */}
-        <div className="bg-white h-20 px-8 flex items-center justify-between border-b border-gray-200 shrink-0 z-10 shadow-sm">
+        <div className="bg-card h-24 px-8 flex items-center justify-between border-b border-border shrink-0 z-10 shadow-sm">
           <div>
-            <h1 className="text-xl font-black text-gray-800 uppercase tracking-tight">
+            <h1 className="text-3xl font-black text-foreground uppercase tracking-tight flex items-center gap-3">
               {activeTab === 'dashboard' && "Biznes Holati"}
               {activeTab === 'staff' && "Xodimlar Samaradorligi"}
               {activeTab === 'products' && "Menyu Reytingi"}
               {activeTab === 'history' && "Savdo Tarixi"}
-              {activeTab === 'trash' && "Bekor Qilinganlar Tarixi"}
+              {activeTab === 'trash' && "Bekor Qilinganlar"}
             </h1>
-            <p className="text-gray-400 text-xs font-bold mt-0.5 flex items-center gap-1">
-              <Calendar size={12} /> {formatDate(dateRange.startDate)} — {formatDate(dateRange.endDate)}
+            <p className="text-muted-foreground text-sm font-bold mt-1 flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-lg w-fit">
+              <Calendar size={14} /> {formatDate(dateRange.startDate)} — {formatDate(dateRange.endDate)}
             </p>
           </div>
 
-          {/* Quick Stats Summary (Optional Header Info) */}
-          <div className="flex gap-6">
-            <div className="text-right">
-              <p className="text-[10px] font-bold text-gray-400 uppercase">Jami Tushum</p>
-              <p className="text-lg font-black text-blue-600">{stats.totalRevenue.toLocaleString()}</p>
+          <div className="flex gap-8 bg-secondary/10 p-2 rounded-2xl border border-border">
+            <div className="text-right px-4">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Jami Tushum</p>
+              <p className="text-2xl font-black text-primary">{stats.totalRevenue.toLocaleString()}</p>
             </div>
-            <div className="text-right border-l border-gray-100 pl-6">
-              <p className="text-[10px] font-bold text-gray-400 uppercase">Cheklar</p>
-              <p className="text-lg font-black text-gray-800">{stats.totalOrders}</p>
+            <div className="text-right border-l border-border pl-8 pr-4">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Cheklar</p>
+              <p className="text-2xl font-black text-foreground">{stats.totalOrders}</p>
             </div>
           </div>
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-8 pb-32">
-          {activeTab === 'dashboard' && renderDashboard()}
-          {activeTab === 'staff' && renderStaff()}
-          {activeTab === 'products' && renderProducts()}
-          {activeTab === 'history' && renderHistory()}
-          {activeTab === 'trash' && renderCancelledOrders()}
+        <div className="flex-1 overflow-y-auto p-8 pb-32 bg-secondary/5 scrollbar-thin">
+          <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {activeTab === 'dashboard' && renderDashboard()}
+            {activeTab === 'staff' && renderStaff()}
+            {activeTab === 'products' && renderProducts()}
+            {activeTab === 'history' && renderHistory()}
+            {activeTab === 'trash' && renderCancelledOrders()}
+          </div>
         </div>
       </div>
     </div>

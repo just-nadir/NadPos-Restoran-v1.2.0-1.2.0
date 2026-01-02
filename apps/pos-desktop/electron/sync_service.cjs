@@ -1,5 +1,7 @@
 const { db } = require('./database.cjs');
 const log = require('electron-log');
+const fs = require('fs');
+const path = require('path');
 
 const CLOUD_API_URL = 'https://halboldi.uz/api'; // Production URL
 const SYNC_INTERVAL_MS = 10000; // 10 seconds
@@ -22,9 +24,7 @@ const TABLES = [
     'debt_history',
     'customer_debts',
     'cancelled_orders',
-    'settings',
-    'sms_templates',
-    'sms_logs'
+    'settings'
 ];
 
 const TABLE_SCHEMAS = {};
@@ -87,8 +87,59 @@ async function pushChanges() {
         try {
             const rows = db.prepare(`SELECT * FROM ${table} WHERE is_synced = 0 LIMIT 50`).all();
             if (rows.length > 0) {
-                payload.tables[table] = rows;
-                recordCounts[table] = rows.length;
+                // SANITIZATION LOGIC START
+                const cleanRows = rows.map(row => {
+                    const clean = { ...row };
+
+                    // Fix Waiter ID & Name
+                    if (clean.waiter_id === '0' || clean.waiter_id === 0) {
+                        clean.waiter_id = null;
+                        if (clean.waiter_name === "Noma'lum") clean.waiter_name = null;
+                    }
+                    if (clean.guest_count === null) clean.guest_count = 0;
+
+
+                    // Fix Product Stock Precision
+                    if (table === 'products' && typeof clean.stock === 'number') {
+                        clean.stock = Number(clean.stock.toFixed(4));
+                    }
+
+                    // Normalize Dates (updated_at, created_at, deleted_at, date, due_date)
+                    const dateFields = ['updated_at', 'created_at', 'deleted_at', 'date', 'due_date'];
+                    for (const field of dateFields) {
+                        if (clean[field]) {
+                            try {
+                                const d = new Date(clean[field]);
+                                if (!isNaN(d.getTime())) {
+                                    clean[field] = d.toISOString();
+                                }
+                            } catch (e) {
+                                // keep original if fail
+                            }
+                        }
+                    }
+
+                    // Clean items_json (for sales, cancelled_orders)
+                    if ((table === 'sales' || table === 'cancelled_orders') && clean.items_json) {
+                        try {
+                            const items = JSON.parse(clean.items_json);
+                            const cleanItems = items.map(item => ({
+                                ...item,
+                                quantity: typeof item.quantity === 'number' ? Number(item.quantity.toFixed(4)) : item.quantity,
+                                price: typeof item.price === 'number' ? Number(item.price) : item.price
+                            }));
+                            clean.items_json = JSON.stringify(cleanItems);
+                        } catch (err) {
+                            console.warn(`Failed to clean items_json for ${table} ${clean.id}`, err);
+                        }
+                    }
+
+                    return clean;
+                });
+                // SANITIZATION LOGIC END
+
+                payload.tables[table] = cleanRows;
+                recordCounts[table] = cleanRows.length;
                 hasChanges = true;
             }
         } catch (e) {
@@ -99,6 +150,16 @@ async function pushChanges() {
     if (!hasChanges) return false;
 
     console.log("📤 Pushing changes:", recordCounts);
+
+    // DEBUG: Save payload to file
+    try {
+        const debugPath = path.join(__dirname, 'debug_payload.json');
+        fs.writeFileSync(debugPath, JSON.stringify(payload, null, 2));
+        console.log(`🐛 Debug payload written to: ${debugPath}`);
+    } catch (err) {
+        console.error("Failed to write debug payload:", err);
+    }
+
     notifyUI('syncing', null);
 
     // 2. Send to Cloud

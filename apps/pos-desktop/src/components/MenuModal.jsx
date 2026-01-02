@@ -242,7 +242,7 @@ const MenuModal = ({ isOpen, onClose, tableId, tableName }) => {
                                         >
                                             <div className="flex-1">
                                                 <h3 className="font-bold text-lg text-foreground">{product.name}</h3>
-                                                <p className="text-muted-foreground text-sm">{product.code || 'Kod yo\'q'}</p>
+
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <span className="font-bold text-lg text-primary">{product.price.toLocaleString()}</span>
@@ -272,29 +272,32 @@ const MenuModal = ({ isOpen, onClose, tableId, tableName }) => {
                             </h3>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
                             {cart.length === 0 ? (
                                 <div className="text-center text-muted-foreground mt-20 opacity-50 flex flex-col items-center">
-                                    <ShoppingBag size={48} className="mb-2" strokeWidth={1} />
-                                    <p>Savat bo'sh</p>
+                                    <ShoppingBag size={64} className="mb-4 stroke-1" />
+                                    <p className="text-xl font-medium">Savat bo'sh</p>
                                 </div>
                             ) : (
                                 cart.map(item => (
-                                    <div key={item.id} className="bg-background border border-border p-3 rounded-xl shadow-sm flex flex-col gap-2 animate-in slide-in-from-right-5 duration-200">
-                                        <div className="flex justify-between items-start">
-                                            <h4 className="font-bold text-sm line-clamp-2">{item.name}</h4>
-                                            <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-destructive transition-colors"><Trash2 size={16} /></button>
+                                    <div key={item.id} className="bg-background border border-border p-4 rounded-2xl shadow-sm flex flex-col gap-3 animate-in slide-in-from-right-5 duration-200">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h4 className="font-bold text-base line-clamp-2 leading-tight">{item.name}</h4>
+                                            <button onClick={() => removeFromCart(item.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1"><Trash2 size={20} /></button>
                                         </div>
 
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-medium text-muted-foreground">{(item.price * item.qty).toLocaleString()}</span>
+                                        <div className="flex justify-between items-end">
+                                            <div className="mb-1">
+                                                <span className="text-sm text-muted-foreground">Jami:</span>
+                                                <p className="font-bold text-lg text-primary">{(item.price * item.qty).toLocaleString()}</p>
+                                            </div>
 
-                                            <div className="flex items-center gap-3 bg-secondary/50 rounded-lg p-1">
-                                                <button onClick={() => updateQty(item.id, -1)} className="p-1 hover:bg-white rounded shadow-sm transition-colors text-foreground"><Minus size={14} /></button>
-                                                <span className="font-bold text-sm min-w-[2rem] text-center">
+                                            <div className="flex items-center gap-1 bg-secondary rounded-xl p-1.5 shadow-inner">
+                                                <button onClick={() => updateQty(item.id, -1)} className="w-10 h-10 flex items-center justify-center bg-background hover:bg-white rounded-lg shadow-sm transition-all text-foreground active:scale-95 border border-border"><Minus size={18} /></button>
+                                                <span className="font-bold text-lg min-w-[3rem] text-center font-mono">
                                                     {item.unit_type === 'kg' ? item.qty.toFixed(3) : item.qty}
                                                 </span>
-                                                <button onClick={() => updateQty(item.id, 1)} className="p-1 hover:bg-white rounded shadow-sm transition-colors text-foreground"><Plus size={14} /></button>
+                                                <button onClick={() => updateQty(item.id, 1)} className="w-10 h-10 flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm transition-all active:scale-95"><Plus size={18} /></button>
                                             </div>
                                         </div>
                                     </div>

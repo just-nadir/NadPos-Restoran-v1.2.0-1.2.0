@@ -575,6 +575,71 @@ module.exports = {
         }
     },
 
+    moveTable: (fromTableId, toTableId) => {
+        try {
+            if (fromTableId === toTableId) throw new Error("Bir xil stolni tanladingiz");
+
+            const moveTransaction = db.transaction(() => {
+                const sourceTable = db.prepare('SELECT * FROM tables WHERE id = ?').get(fromTableId);
+                const targetTable = db.prepare('SELECT * FROM tables WHERE id = ?').get(toTableId);
+
+                if (!sourceTable || sourceTable.status === 'free') throw new Error("Ko'chirilayotgan stol bo'sh");
+                if (!targetTable) throw new Error("Nishon stol topilmadi");
+
+                // 1. Buyurtmalarni o'tkazish
+                db.prepare('UPDATE order_items SET table_id = ? WHERE table_id = ?').run(toTableId, fromTableId);
+
+                // 2. Stol statusini yangilash
+                if (targetTable.status === 'free') {
+                    // MOVE (Ko'chirish)
+                    db.prepare(`UPDATE tables SET 
+                        status = ?, 
+                        total_amount = ?, 
+                        start_time = ?, 
+                        guests = ?, 
+                        waiter_id = ?, 
+                        waiter_name = ?,
+                        current_check_number = ? 
+                        WHERE id = ?`
+                    ).run(
+                        sourceTable.status,
+                        sourceTable.total_amount,
+                        sourceTable.start_time,
+                        sourceTable.guests,
+                        sourceTable.waiter_id,
+                        sourceTable.waiter_name,
+                        sourceTable.current_check_number,
+                        toTableId
+                    );
+                } else {
+                    // MERGE (Birlashtirish)
+                    const newTotal = (targetTable.total_amount || 0) + (sourceTable.total_amount || 0);
+                    // Agar source stolning ofitsianti boshqa bo'lsa, kim qolishi kerak?
+                    // Odatda target stol egasi qoladi yoki "waiter_name" string bo'lsa birlashtiramiz.
+                    // Hozircha target stol egasi qoladi, total qo'shiladi.
+
+                    db.prepare(`UPDATE tables SET total_amount = ? WHERE id = ?`).run(newTotal, toTableId);
+                }
+
+                // 3. Eski stolni bo'shatish
+                db.prepare("UPDATE tables SET status = 'free', guests = 0, start_time = NULL, total_amount = 0, current_check_number = 0, waiter_id = 0, waiter_name = NULL WHERE id = ?").run(fromTableId);
+            });
+
+            moveTransaction();
+
+            notify('tables', null);
+            notify('table-items', fromTableId); // Eski stolni update qilish (bo'shatish uchun)
+            notify('table-items', toTableId);   // Yangi stolni update qilish
+
+            log.info(`Stol ko'chirildi: ${fromTableId} -> ${toTableId}`);
+            return { success: true };
+
+        } catch (err) {
+            log.error("moveTable xatosi:", err);
+            throw err;
+        }
+    },
+
     getSaleDetails: (saleId) => {
         try {
             const sale = db.prepare('SELECT items_json, check_number, date, total_amount, waiter_name FROM sales WHERE id = ?').get(saleId);

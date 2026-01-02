@@ -18,7 +18,6 @@ const TablesManagement = lazy(() => import('./TablesManagement'));
 const CustomersManagement = lazy(() => import('./CustomersManagement'));
 const Reports = lazy(() => import('./Reports'));
 const Settings = lazy(() => import('./Settings'));
-const Marketing = lazy(() => import('./Marketing'));
 const InventoryManagement = lazy(() => import('./InventoryManagement'));
 
 // Yuklanayotganda ko'rsatiladigan chiroyli spinner
@@ -121,7 +120,6 @@ const DesktopLayout = () => {
             case 'tables': return <TablesManagement />;
             case 'customers': return <CustomersManagement />;
             case 'reports': return <Reports />;
-            case 'marketing': return <Marketing />;
             case 'settings': return <Settings />;
             case 'inventory': return <InventoryManagement />;
             default: return <div>Sahifa topilmadi</div>;

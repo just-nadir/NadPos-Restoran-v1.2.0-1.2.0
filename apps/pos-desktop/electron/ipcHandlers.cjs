@@ -9,7 +9,7 @@ const orderController = require('./controllers/orderController.cjs');
 const settingsController = require('./controllers/settingsController.cjs');
 const staffController = require('./controllers/staffController.cjs');
 const userController = require('./controllers/userController.cjs'); // Customers & Debtors
-const smsController = require('./controllers/smsController.cjs');   // SMS Marketing
+
 const inventoryController = require('./controllers/inventoryController.cjs'); // YANGI
 const printerService = require('./services/printerService.cjs');
 // const licenseController = require('./controllers/licenseController.cjs'); // License System (REMOVED)
@@ -42,6 +42,7 @@ function registerIpcHandlers(ipcMain) {
     ipcMain.handle('add-table', (e, { hallId, name }) => tableController.addTable(hallId, name));
     ipcMain.handle('delete-table', (e, id) => tableController.deleteTable(id));
     ipcMain.handle('update-table-status', (e, { id, status }) => tableController.updateTableStatus(id, status));
+    ipcMain.handle('move-table', (e, { fromTableId, toTableId }) => orderController.moveTable(fromTableId, toTableId));
 
     // ==========================================
     // 3. MENU (Kategoriya va Mahsulotlar)
@@ -140,32 +141,7 @@ function registerIpcHandlers(ipcMain) {
     ipcMain.handle('save-user', (e, user) => staffController.saveUser(user));
     ipcMain.handle('delete-user', (e, id) => staffController.deleteUser(id));
 
-    ipcMain.handle('backup-db', () => settingsController.backupDB());
-
     ipcMain.handle('get-system-printers', () => printerService.getPrinters());
-
-    // ==========================================
-    // 7. SMS MARKETING (Yangi Modul)
-    // ==========================================
-    ipcMain.handle('get-sms-templates', () => smsController.getTemplates());
-
-    // Frontend {type, content, ...} jo'natadi, Controller (type, text) kutadi
-    ipcMain.handle('save-sms-template', (e, data) => smsController.updateTemplate(data.type, data.content));
-
-    ipcMain.handle('get-sms-logs', () => smsController.getHistory());
-
-    ipcMain.handle('send-mass-sms', async (e, { message, filter }) => {
-        // Hozircha filter logikasi controller ichida oddiy broadcast
-        return await smsController.sendBroadcast(message);
-    });
-
-    // ==========================================
-    // 9. TELEGRAM BOT (Yangi Modul)
-    // ==========================================
-    const telegramController = require('./controllers/telegramController.cjs');
-
-    ipcMain.handle('telegram-test', () => telegramController.sendTestMessage());
-    ipcMain.handle('telegram-send-report', (e, date) => telegramController.sendDailyReport(date));
 
     // ==========================================
     // 10. SHIFT MANAGEMENT (Smena) - YANGI

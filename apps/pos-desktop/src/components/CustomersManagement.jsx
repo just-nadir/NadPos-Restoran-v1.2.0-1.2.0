@@ -175,26 +175,26 @@ const CustomersManagement = () => {
   return (
     <div className="flex w-full h-full relative bg-background">
       {/* 2-QISM: SIDEBAR (List & Filters) */}
-      <div className="w-96 bg-card border-r border-border flex flex-col h-full shadow-sm z-10">
+      <div className="w-96 bg-card border-r border-border flex flex-col h-full shadow-sm z-10 transition-colors">
 
         {/* Header & Tabs */}
-        <div className="p-4 border-b border-border bg-card">
-          <h2 className="text-xl font-bold text-foreground mb-4 px-2">Mijozlar</h2>
+        <div className="p-5 border-b border-border bg-card">
+          <h2 className="text-2xl font-black text-foreground mb-5 px-1 tracking-tight">Mijozlar</h2>
 
           {/* Search */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <div className="relative mb-5">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
             <input
               type="text"
               placeholder="Qidirish..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-secondary/30 rounded-xl border-transparent focus:bg-background focus:border-primary border outline-none text-foreground transition-all"
+              className="w-full h-14 pl-12 pr-4 bg-secondary/20 rounded-2xl border-transparent focus:bg-background focus:border-primary border-2 outline-none text-foreground font-bold text-lg transition-all"
             />
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             {[
               { id: 'all', icon: Users, label: 'Barchasi' },
               { id: 'debtor', icon: ArrowDownLeft, label: 'Qarzdorlar', color: 'text-destructive' }
@@ -203,13 +203,13 @@ const CustomersManagement = () => {
                 key={tab.id}
                 onClick={() => setFilterType(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all border",
+                  "flex-1 flex items-center justify-center gap-2 h-12 rounded-xl text-base font-bold whitespace-nowrap transition-all border shadow-sm active:scale-95",
                   filterType === tab.id
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background text-muted-foreground border-border hover:bg-secondary"
+                    ? "bg-primary text-primary-foreground border-primary shadow-primary/25"
+                    : "bg-background text-muted-foreground border-border hover:bg-secondary hover:text-foreground"
                 )}
               >
-                <tab.icon size={14} className={filterType !== tab.id ? tab.color : ''} />
+                <tab.icon size={18} className={filterType !== tab.id ? tab.color : ''} />
                 {tab.label}
               </button>
             ))}
@@ -217,12 +217,12 @@ const CustomersManagement = () => {
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-secondary/5 scrollbar-thin">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full py-3 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5 transition-all font-bold flex items-center justify-center gap-2 mb-2"
+            className="w-full h-16 border-2 border-dashed border-border rounded-2xl text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5 transition-all font-bold text-lg flex items-center justify-center gap-3 active:scale-[0.98]"
           >
-            <Plus size={20} /> Yangi Mijoz Qo'shish
+            <Plus size={24} /> Yangi Mijoz
           </button>
 
           {filteredCustomers.map(customer => (
@@ -230,14 +230,14 @@ const CustomersManagement = () => {
               key={customer.id}
               onClick={() => setSelectedCustomer(customer)}
               className={cn(
-                "w-full p-4 rounded-xl cursor-pointer transition-all border text-left group relative",
+                "w-full p-5 rounded-2xl cursor-pointer transition-all border text-left group relative min-h-[80px]",
                 selectedCustomer?.id === customer.id
-                  ? "bg-primary/10 border-primary shadow-sm"
-                  : "bg-card border-transparent hover:bg-secondary/50 border-b-border"
+                  ? "bg-primary/10 border-primary shadow-lg shadow-primary/10 scale-[1.02] z-10"
+                  : "bg-card border-border hover:border-primary/50 hover:shadow-md"
               )}
             >
-              <div className="flex justify-between items-start mb-1">
-                <span className={cn("font-bold text-lg truncate pr-8", selectedCustomer?.id === customer.id ? "text-primary" : "text-foreground")}>
+              <div className="flex justify-between items-start mb-2">
+                <span className={cn("font-bold text-xl truncate pr-8 tracking-tight", selectedCustomer?.id === customer.id ? "text-primary" : "text-foreground")}>
                   {customer.name}
                 </span>
                 {selectedCustomer?.id !== customer.id && (
@@ -245,20 +245,20 @@ const CustomersManagement = () => {
                     disabled={customer.debt > 0}
                     onClick={(e) => { e.stopPropagation(); if (customer.debt <= 0) confirmDelete(customer.id); }}
                     className={cn(
-                      "absolute right-2 top-2 p-2 transition-opacity",
-                      customer.debt > 0 ? "text-muted-foreground/30 cursor-not-allowed hidden group-hover:block" : "text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+                      "absolute right-3 top-3 p-2 rounded-xl transition-all active:scale-90",
+                      customer.debt > 0 ? "text-muted-foreground/30 cursor-not-allowed hidden group-hover:block" : "text-muted-foreground hover:text-white hover:bg-destructive opacity-0 group-hover:opacity-100"
                     )}
                     title={customer.debt > 0 ? "Qarzdor mijozni o'chirib bo'lmaydi" : "O'chirish"}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={20} />
                   </button>
                 )}
               </div>
 
               <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">{customer.phone}</span>
+                <span className="text-muted-foreground font-medium flex items-center gap-1.5"><User size={14} /> {customer.phone}</span>
                 <span className={cn(
-                  "font-bold px-2 py-0.5 rounded text-xs",
+                  "font-bold px-2.5 py-1 rounded-lg text-sm",
                   customer.debt > 0 ? "bg-destructive/10 text-destructive" : "bg-green-500/10 text-green-600"
                 )}>
                   {customer.debt > 0 ? `-${customer.debt.toLocaleString()}` : customer.balance.toLocaleString()}
@@ -266,7 +266,7 @@ const CustomersManagement = () => {
               </div>
 
               {customer.birthday && (
-                <div className="text-orange-500 flex items-center gap-1 text-xs font-bold mt-1.5 opacity-80">
+                <div className="text-orange-500 flex items-center gap-1.5 text-xs font-bold mt-2 opacity-90 bg-orange-500/10 w-fit px-2 py-0.5 rounded-md">
                   <Gift size={12} /> {formatDate(customer.birthday)}
                 </div>
               )}
@@ -274,9 +274,9 @@ const CustomersManagement = () => {
           ))}
 
           {filteredCustomers.length === 0 && (
-            <div className="text-center py-10 text-muted-foreground opacity-50 flex flex-col items-center">
-              <Users size={48} strokeWidth={1} className="mb-2" />
-              <p>Mijozlar topilmadi</p>
+            <div className="text-center py-20 text-muted-foreground opacity-50 flex flex-col items-center">
+              <Users size={64} strokeWidth={1} className="mb-4 opacity-50" />
+              <p className="text-lg font-medium">Mijozlar topilmadi</p>
             </div>
           )}
         </div>
@@ -286,45 +286,46 @@ const CustomersManagement = () => {
       <div className="flex-1 bg-background flex flex-col h-full overflow-hidden relative">
         {selectedCustomer ? (
           <>
-            <div className="bg-card p-8 border-b border-border shadow-sm z-20">
+            <div className="bg-card p-8 lg:p-10 border-b border-border shadow-sm z-20">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-3xl font-bold text-foreground">{selectedCustomer.name}</h1>
-                    {selectedCustomer.type === 'discount' && <span className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 text-xs font-bold border border-purple-500/20">VIP {selectedCustomer.value}%</span>}
-                    {selectedCustomer.type === 'cashback' && <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-600 text-xs font-bold border border-green-500/20">Bonus {selectedCustomer.value}%</span>}
+                  <div className="flex items-center gap-4 mb-2">
+                    <h1 className="text-4xl font-black text-foreground tracking-tight">{selectedCustomer.name}</h1>
+                    {selectedCustomer.type === 'discount' && <span className="px-4 py-1.5 rounded-full bg-purple-500/10 text-purple-600 text-sm font-bold border border-purple-500/20">VIP {selectedCustomer.value}%</span>}
+                    {selectedCustomer.type === 'cashback' && <span className="px-4 py-1.5 rounded-full bg-green-500/10 text-green-600 text-sm font-bold border border-green-500/20">Bonus {selectedCustomer.value}%</span>}
                   </div>
-                  <p className="text-muted-foreground text-lg flex items-center gap-2">
-                    <User size={18} /> {selectedCustomer.phone}
+                  <p className="text-muted-foreground text-xl flex items-center gap-2 font-medium">
+                    <User size={20} /> {selectedCustomer.phone}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-1">
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">
                     {selectedCustomer.debt > 0 ? "Joriy Qarz" : "Joriy Balans"}
                   </p>
-                  <div className={cn("text-4xl font-black", selectedCustomer.debt > 0 ? "text-destructive" : "text-green-600")}>
+                  <div className={cn("text-5xl font-black tracking-tighter", selectedCustomer.debt > 0 ? "text-destructive" : "text-green-600")}>
                     {selectedCustomer.debt > 0 ? selectedCustomer.debt.toLocaleString() : selectedCustomer.balance.toLocaleString()}
-                    <span className="text-lg text-muted-foreground font-medium ml-1">so'm</span>
+                    <span className="text-xl text-muted-foreground font-bold ml-2">so'm</span>
                   </div>
                 </div>
               </div>
 
               {/* ACTIONS BAR */}
-              <div className="flex gap-4 mt-6">
+              <div className="flex gap-4 mt-8">
                 {selectedCustomer.debt > 0 && (
-                  <form onSubmit={handlePayDebt} className="flex-1 bg-secondary/20 p-2 rounded-xl border border-border flex gap-2">
+                  <form onSubmit={handlePayDebt} className="flex-1 bg-secondary/30 p-2 rounded-2xl border border-border flex gap-2 shadow-inner">
                     <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs uppercase">So'ndirish</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs uppercase tracking-wider">So'ndirish</span>
                       <input
                         type="number"
                         placeholder="Summa..."
                         value={payAmount}
                         onChange={(e) => setPayAmount(e.target.value)}
-                        className="w-full h-full pl-24 pr-4 bg-transparent outline-none font-bold text-foreground"
+                        className="w-full h-full pl-28 pr-4 bg-transparent outline-none font-black text-2xl text-foreground"
+                        autoFocus
                       />
                     </div>
-                    <Button type="submit" disabled={!payAmount} className="bg-green-600 hover:bg-green-700 text-white shadow-md">
-                      <CheckCircle size={18} className="mr-2" /> To'lash
+                    <Button type="submit" disabled={!payAmount} className="bg-green-600 hover:bg-green-700 text-white shadow-lg h-14 px-8 text-lg font-bold rounded-xl active:scale-95 transition-all">
+                      <CheckCircle size={20} className="mr-2" /> To'lash
                     </Button>
                   </form>
                 )}
@@ -333,27 +334,27 @@ const CustomersManagement = () => {
                   disabled={selectedCustomer.debt > 0}
                   onClick={() => confirmDelete(selectedCustomer.id)}
                   className={cn(
-                    "bg-card border-border",
-                    selectedCustomer.debt > 0 ? "text-muted-foreground cursor-not-allowed opacity-50" : "text-destructive hover:bg-destructive/10"
+                    "bg-card border-border h-[74px] px-8 text-lg font-bold rounded-2xl border-2 transition-all active:scale-95",
+                    selectedCustomer.debt > 0 ? "text-muted-foreground cursor-not-allowed opacity-50" : "text-destructive hover:bg-destructive hover:text-white"
                   )}
                   title={selectedCustomer.debt > 0 ? "Qarzdor mijozni o'chirib bo'lmaydi" : ""}
                 >
-                  <Trash2 size={20} className="mr-2" /> O'chirish
+                  <Trash2 size={24} className="mr-2" /> O'chirish
                 </Button>
               </div>
             </div>
 
             {/* HISTORY */}
-            <div className="flex-1 overflow-y-auto p-8 bg-secondary/5">
-              <h3 className="font-bold text-muted-foreground mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+            <div className="flex-1 overflow-y-auto p-8 bg-secondary/5 scrollbar-thin">
+              <h3 className="font-black text-muted-foreground mb-6 flex items-center gap-2 text-sm uppercase tracking-wider pl-2">
                 <FileText size={16} /> Operatsiyalar Tarixi
               </h3>
 
-              <div className="space-y-3 max-w-4xl">
+              <div className="space-y-4 max-w-5xl mx-auto">
                 {isPaySuccess && (
-                  <div className="bg-green-500/10 border border-green-500/20 text-green-600 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 mb-4">
-                    <CheckCircle size={24} />
-                    <span className="font-bold">To'lov muvaffaqiyatli qabul qilindi!</span>
+                  <div className="bg-green-500/10 border border-green-500/20 text-green-600 p-6 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4 mb-6 shadow-sm">
+                    <CheckCircle size={28} />
+                    <span className="font-bold text-xl">To'lov muvaffaqiyatli qabul qilindi!</span>
                   </div>
                 )}
 
@@ -375,45 +376,45 @@ const CustomersManagement = () => {
                         }
                       }}
                       className={cn(
-                        "bg-card p-5 rounded-2xl shadow-sm border border-border flex justify-between items-center hover:shadow-md transition-all",
-                        hasDetails && "cursor-pointer active:scale-[0.98] hover:bg-muted/5"
+                        "bg-card p-6 rounded-3xl shadow-sm border border-border flex justify-between items-center hover:shadow-lg hover:border-primary/30 transition-all group",
+                        hasDetails && "cursor-pointer active:scale-[0.99] hover:bg-secondary/20"
                       )}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-5">
                         <div className={cn(
-                          "w-12 h-12 rounded-full flex items-center justify-center border",
-                          item.type === 'debt' ? "bg-destructive/10 border-destructive/20 text-destructive"
-                            : item.type === 'payment' ? "bg-green-500/10 border-green-500/20 text-green-600"
-                              : "bg-blue-500/10 border-blue-500/20 text-blue-600"
+                          "w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-transform group-hover:scale-110",
+                          item.type === 'debt' ? "bg-destructive/10 border-destructive/10 text-destructive"
+                            : item.type === 'payment' ? "bg-green-500/10 border-green-500/10 text-green-600"
+                              : "bg-blue-500/10 border-blue-500/10 text-blue-600"
                         )}>
-                          {item.type === 'debt' ? <ArrowDownLeft size={24} />
-                            : item.type === 'payment' ? <ArrowUpRight size={24} />
-                              : <CreditCard size={24} />}
+                          {item.type === 'debt' ? <ArrowDownLeft size={28} />
+                            : item.type === 'payment' ? <ArrowUpRight size={28} />
+                              : <CreditCard size={28} />}
                         </div>
                         <div>
-                          <p className="font-bold text-foreground text-lg mb-0.5">
-                            {item.comment || (item.type === 'debt' ? 'Nasiya' : 'To\'lov')}
+                          <p className="font-bold text-foreground text-xl mb-1">
+                            {item.comment || (item.type === 'debt' ? 'Nasiya Savdo' : 'Qarz To\'lovi')}
                           </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium bg-secondary/50 px-2 py-0.5 rounded w-fit">
-                            <Calendar size={12} />
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium bg-secondary/50 px-3 py-1 rounded-lg w-fit">
+                            <Calendar size={14} />
                             {formatDateTime(item.date)}
                           </div>
                         </div>
                       </div>
                       <div className={cn(
-                        "font-black text-xl tabular-nums",
+                        "font-black text-2xl tabular-nums tracking-tight",
                         item.type === 'debt' ? "text-destructive" : "text-green-600"
                       )}>
-                        {item.type === 'debt' ? '+' : '-'}{item.amount.toLocaleString()}
+                        {item.type === 'debt' ? '+' : '-'}{item.amount.toLocaleString()} <span className="text-sm opacity-50 font-bold text-muted-foreground">so'm</span>
                       </div>
                     </div>
                   ); // End return
                 })}
 
                 {history.length === 0 && (
-                  <div className="text-center py-20 opacity-40">
-                    <FileText size={48} className="mx-auto mb-4" strokeWidth={1} />
-                    <p className="text-xl font-medium">Tarix mavjud emas</p>
+                  <div className="text-center py-24 opacity-40">
+                    <FileText size={64} className="mx-auto mb-4 stroke-1" />
+                    <p className="text-2xl font-bold">Tarix mavjud emas</p>
                   </div>
                 )}
               </div>

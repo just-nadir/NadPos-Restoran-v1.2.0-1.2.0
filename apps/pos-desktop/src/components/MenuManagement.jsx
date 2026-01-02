@@ -197,41 +197,41 @@ const MenuManagement = () => {
   return (
     <div className="flex w-full h-full relative bg-background">
       {/* SIDEBAR (Kategoriyalar) */}
-      <div className="w-80 bg-card border-r border-border flex flex-col h-full z-10">
-        <div className="p-6 border-b border-border flex justify-between items-center">
+      <div className="w-80 bg-card border-r border-border flex flex-col h-full z-10 transition-all duration-300">
+        <div className="p-6 border-b border-border flex justify-between items-center bg-card">
           <h2 className="text-xl font-bold text-foreground">Kategoriyalar</h2>
-          <Button size="icon" variant="ghost" className="rounded-full hover:bg-secondary" onClick={() => setIsAddingCategory(true)}>
-            <Plus className="text-primary" />
+          <Button size="icon" variant="ghost" className="rounded-full w-12 h-12 hover:bg-secondary active:scale-95 transition-transform" onClick={() => setIsAddingCategory(true)}>
+            <Plus className="text-primary" size={24} />
           </Button>
         </div>
 
         {isAddingCategory && (
-          <form onSubmit={handleAddCategory} className="p-4 bg-secondary/10 border-b border-border animate-in slide-in-from-top">
-            <input autoFocus type="text" placeholder="Nomi..." value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="w-full p-3 rounded-lg border border-border bg-background focus:border-primary outline-none mb-2 text-sm text-foreground" />
-            <div className="flex gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddingCategory(false)} className="flex-1 text-muted-foreground">Bekor</Button>
-              <Button type="submit" size="sm" className="flex-1">Qo'shish</Button>
+          <form onSubmit={handleAddCategory} className="p-4 bg-secondary/10 border-b border-border animate-in slide-in-from-top duration-300">
+            <input autoFocus type="text" placeholder="Nomi..." value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="w-full p-4 rounded-xl border border-border bg-background focus:border-primary outline-none mb-3 text-lg text-foreground shadow-sm" />
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" size="lg" onClick={() => setIsAddingCategory(false)} className="flex-1 h-12 text-muted-foreground font-bold">Bekor</Button>
+              <Button type="submit" size="lg" className="flex-1 h-12 font-bold shadow-md shadow-primary/20">Qo'shish</Button>
             </div>
           </form>
         )}
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {categories.map(cat => (
             <div key={cat.id} className="relative group">
               {editingCategoryId === cat.id ? (
                 // Tahrirlash rejimi
-                <form onSubmit={handleUpdateCategory} className="w-full bg-secondary/30 px-3 py-2 rounded-xl border border-primary animate-in slide-in-from-top">
+                <form onSubmit={handleUpdateCategory} className="w-full bg-secondary/30 p-3 rounded-2xl border-2 border-primary animate-in zoom-in duration-200">
                   <input
                     autoFocus
                     type="text"
                     value={editCategoryName}
                     onChange={(e) => setEditCategoryName(e.target.value)}
-                    className="w-full p-2 rounded-lg border border-border bg-background mb-2 text-sm text-foreground"
+                    className="w-full p-3 rounded-xl border border-border bg-background mb-3 text-lg text-foreground font-medium outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Kategoriya nomi"
                   />
                   <div className="flex gap-2">
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCategoryId(null)} className="flex-1 h-8">Bekor</Button>
-                    <Button type="submit" size="sm" className="flex-1 h-8">Saqlash</Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCategoryId(null)} className="flex-1 h-10 rounded-lg text-muted-foreground">Bekor</Button>
+                    <Button type="submit" size="sm" className="flex-1 h-10 rounded-lg font-bold">Saqlash</Button>
                   </div>
                 </form>
               ) : (
@@ -239,35 +239,35 @@ const MenuManagement = () => {
                 <div
                   onClick={() => setActiveCategory(cat.id)}
                   className={cn(
-                    "w-full px-4 py-3 rounded-xl font-medium transition-all cursor-pointer flex items-center justify-between",
+                    "w-full px-5 py-4 rounded-2xl font-bold text-lg transition-all cursor-pointer flex items-center justify-between min-h-[64px] shadow-sm select-none active:scale-[0.98]",
                     activeCategory === cat.id
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 translate-x-1"
+                      : "bg-background text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent hover:border-border"
                   )}
                 >
-                  <span className="flex-1 text-left truncate">{cat.name}</span>
+                  <span className="flex-1 text-left truncate tracking-wide">{cat.name}</span>
 
                   {/* Tahrirlash va O'chirish tugmalari */}
-                  <div className={cn("flex items-center gap-1 transition-opacity", activeCategory === cat.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+                  <div className={cn("flex items-center gap-2 transition-all duration-300", activeCategory === cat.id ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0")}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         startEditCategory(cat);
                       }}
-                      className="p-1.5 rounded-md hover:bg-white/20 transition-colors"
+                      className="p-2 rounded-xl hover:bg-white/20 active:bg-white/30 transition-colors"
                       title="Tahrirlash"
                     >
-                      <Edit2 size={14} />
+                      <Edit2 size={18} />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         confirmDeleteCategory(cat.id);
                       }}
-                      className="p-1.5 rounded-md hover:bg-red-500/80 transition-colors"
+                      className="p-2 rounded-xl hover:bg-red-500/80 active:bg-red-600 transition-colors text-white/90 hover:text-white"
                       title="O'chirish"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -279,41 +279,41 @@ const MenuManagement = () => {
 
       {/* CONTENT (Mahsulotlar - List View) */}
       <div className="flex-1 bg-background flex flex-col h-full overflow-hidden relative">
-        <div className="px-8 py-5 border-b border-border flex justify-between items-center bg-card shadow-sm z-20">
+        <div className="px-8 py-6 border-b border-border flex justify-between items-center bg-card shadow-sm z-20 sticky top-0">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Menyu</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="text-3xl font-black text-foreground tracking-tight">Menyu</h1>
+            <p className="text-base text-muted-foreground mt-1 font-medium">
               {products.filter(p => p.category_id === activeCategory).length} ta mahsulot
             </p>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <div className="relative w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
               <input
                 type="text"
                 placeholder="Qidirish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-secondary/30 border border-transparent focus:border-primary rounded-lg outline-none text-foreground transition-all"
+                className="w-full pl-12 pr-4 py-3 bg-secondary/30 border border-transparent focus:border-primary focus:bg-background rounded-2xl outline-none text-foreground transition-all text-lg shadow-inner"
               />
             </div>
-            <Button onClick={() => setIsModalOpen(true)} size="lg" className="rounded-xl shadow-lg gap-2">
-              <Plus size={20} /> Yangi Taom
+            <Button onClick={() => setIsModalOpen(true)} size="lg" className="rounded-2xl shadow-xl shadow-primary/20 gap-3 h-14 px-8 text-lg font-bold hover:scale-105 transition-transform">
+              <Plus size={24} /> Yangi Taom
             </Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-0 pb-20">
+        <div className="flex-1 overflow-y-auto p-0 pb-20 scrollbar-thin scrollbar-thumb-rounded-full scrollbar-track-transparent">
           {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50">
-              <Package size={64} className="mb-4" strokeWidth={1} />
-              <p className="text-xl">Mahsulotlar topilmadi</p>
+              <Package size={80} className="mb-6 stroke-1" />
+              <p className="text-2xl font-medium">Mahsulotlar topilmadi</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {/* Table Header (Desktop only ideally, but keeping it simple) */}
-              <div className="grid grid-cols-12 gap-4 px-8 py-3 bg-secondary/20 text-xs font-bold text-muted-foreground uppercase tracking-wider sticky top-0 backdrop-blur-md z-10">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-6 px-8 py-4 bg-muted/30 text-xs font-bold text-muted-foreground uppercase tracking-wider sticky top-0 backdrop-blur-md z-10 border-b border-border">
                 <div className="col-span-3">Nomi</div>
                 <div className="col-span-2">Narxi</div>
                 <div className="col-span-2">Qoldiq</div>
@@ -323,31 +323,36 @@ const MenuManagement = () => {
               </div>
 
               {filteredProducts.map(product => (
-                <div key={product.id} className="grid grid-cols-12 gap-4 px-8 py-4 items-center hover:bg-secondary/10 transition-colors group">
+                <div key={product.id} className="grid grid-cols-12 gap-6 px-8 py-5 items-center hover:bg-secondary/20 transition-colors group min-h-[80px]">
 
                   {/* Name & Code */}
-                  <div className="col-span-3 flex items-center gap-2">
-                    <h3 className={cn("font-bold text-lg text-foreground truncate", !product.is_active && "text-muted-foreground line-through")}>{product.name}</h3>
-                    {product.unit_type === 'kg' && <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900 shrink-0">KG</Badge>}
+                  <div className="col-span-3 flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center text-muted-foreground font-bold text-xl shrink-0">
+                      {product.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className={cn("font-bold text-lg text-foreground truncate", !product.is_active && "text-muted-foreground line-through decoration-2 decoration-destructive/50")}>{product.name}</h3>
+                      {product.unit_type === 'kg' && <Badge variant="outline" className="mt-1 text-[10px] bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900 font-bold">KG</Badge>}
+                    </div>
                   </div>
 
                   {/* Price */}
                   <div className="col-span-2">
-                    <div className="font-bold text-primary text-base">
-                      {product.price.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">so'm</span>
+                    <div className="font-black text-primary text-xl tracking-tight">
+                      {product.price.toLocaleString()} <span className="text-sm text-muted-foreground font-medium">so'm</span>
                     </div>
                   </div>
 
                   {/* Stock (Qoldiq) */}
                   <div className="col-span-2">
-                    <div className={cn("font-bold text-base flex items-center gap-1", product.stock <= 5 ? "text-red-500" : "text-foreground")}>
-                      {product.stock || 0} <span className="text-xs text-muted-foreground font-normal">{product.unit_type === 'kg' ? 'kg' : 'dona'}</span>
+                    <div className={cn("font-bold text-lg flex items-center gap-1.5", product.stock <= 5 ? "text-destructive" : "text-foreground")}>
+                      {product.stock || 0} <span className="text-sm text-muted-foreground font-medium">{product.unit_type === 'kg' ? 'kg' : 'dona'}</span>
                     </div>
                   </div>
 
                   {/* Kitchen */}
                   <div className="col-span-2">
-                    <span className="text-sm text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md truncate block w-fit max-w-full">
+                    <span className="text-sm font-medium text-muted-foreground bg-secondary/50 px-3 py-1.5 rounded-lg truncate block w-fit max-w-full border border-border/50">
                       {product.kitchen_name || '-'}
                     </span>
                   </div>
@@ -357,13 +362,13 @@ const MenuManagement = () => {
                     <button
                       onClick={() => toggleStatus(product.id, product.is_active)}
                       className={cn(
-                        "relative w-12 h-7 rounded-full transition-colors flex items-center px-1",
+                        "relative w-14 h-8 rounded-full transition-all duration-300 flex items-center px-1 shadow-inner",
                         product.is_active ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700"
                       )}
                     >
                       <div className={cn(
-                        "w-5 h-5 bg-white rounded-full shadow-md transform transition-transform",
-                        product.is_active ? "translate-x-5" : "translate-x-0"
+                        "w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 pointer-events-none",
+                        product.is_active ? "translate-x-6" : "translate-x-0"
                       )} />
                     </button>
                   </div>
@@ -373,10 +378,10 @@ const MenuManagement = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10 rounded-full"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive w-12 h-12 rounded-xl transition-all active:scale-95"
                       onClick={() => confirmDelete(product.id)}
                     >
-                      <Trash2 size={20} />
+                      <Trash2 size={22} />
                     </Button>
                   </div>
                 </div>
@@ -385,6 +390,7 @@ const MenuManagement = () => {
           )}
         </div>
       </div>
+      {/* ... Modals ... */}
 
       <ProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddProduct} newProduct={newProduct} setNewProduct={setNewProduct} categories={categories} kitchens={kitchens} />
 
