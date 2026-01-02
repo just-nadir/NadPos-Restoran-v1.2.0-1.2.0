@@ -134,16 +134,16 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
   const remainingAmount = totalAmount - totalSplitAmount;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
-      <div className="bg-white w-[550px] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800">To'lov qilish</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X size={20} className="text-gray-500" /></button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
+      <div className="bg-background w-[550px] rounded-2xl shadow-2xl overflow-hidden border border-border">
+        <div className="flex justify-between items-center p-6 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">To'lov qilish</h2>
+          <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors"><X size={20} className="text-muted-foreground hover:text-foreground" /></button>
         </div>
         <div className="p-6">
           <div className="text-center mb-8">
-            <p className="text-gray-500 mb-1">Jami to'lov summasi</p>
-            <h1 className="text-4xl font-bold text-blue-600">{totalAmount.toLocaleString()} <span className="text-xl text-gray-400">so'm</span></h1>
+            <p className="text-muted-foreground mb-1">Jami to'lov summasi</p>
+            <h1 className="text-4xl font-bold text-primary">{totalAmount.toLocaleString()} <span className="text-xl text-muted-foreground">so'm</span></h1>
           </div>
 
           <div className="mb-4">
@@ -151,8 +151,8 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
               onClick={toggleSplitPayment}
               className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 font-medium
                 ${isSplitPayment
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border'
                 }`}
             >
               <Divide size={20} /> {isSplitPayment ? "Bo'lingan to'lov" : "To'lovni bo'lish"}
@@ -168,14 +168,14 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
                     onClick={() => selectMethod(method.id)}
                     className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left
                       ${activeMethod === method.id
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200'}
-                      ${method.id === 'debt' ? 'text-orange-600' : ''}
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border'}
+                      ${method.id === 'debt' && activeMethod !== 'debt' ? 'text-orange-500 dark:text-orange-400' : ''}
                       `}
                   >
-                    <div className={`${method.id === 'debt' && activeMethod !== 'debt' ? 'text-orange-400' : ''}`}>{method.icon}</div>
+                    <div className={`${method.id === 'debt' ? 'text-orange-500' : activeMethod === method.id ? 'text-primary' : ''}`}>{method.icon}</div>
                     <span className="font-medium">{method.label}</span>
-                    {activeMethod === method.id && <div className="ml-auto text-blue-500"><X size={16} /></div>}
+                    {activeMethod === method.id && <div className="ml-auto text-primary"><X size={16} /></div>}
                   </button>
                 ))}
               </div>
@@ -183,14 +183,14 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
               {/* Nasiya uchun sana tanlash */}
               {activeMethod === 'debt' && (
                 <div className="mb-4">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Qaytarish sanasi</label>
+                  <label className="block text-sm font-bold text-foreground mb-2">Qaytarish sanasi</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
                     <input
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all text-gray-700 font-medium"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-border bg-secondary/20 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 dark:focus:ring-orange-900 transition-all text-foreground font-medium"
                       min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
@@ -199,14 +199,14 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
             </>
           ) : (
             // Split Payment UI
-            <div className="mb-4 border p-4 rounded-xl bg-gray-50">
-              <h3 className="font-bold text-gray-700 mb-3">Bo'lingan to'lovlar</h3>
+            <div className="mb-4 border border-border p-4 rounded-xl bg-secondary/10">
+              <h3 className="font-bold text-foreground mb-3">Bo'lingan to'lovlar</h3>
               {splitPayments.map((payment, index) => (
-                <div key={payment.id} className="flex items-center gap-2 mb-3 p-2 bg-white rounded-lg border border-gray-200">
+                <div key={payment.id} className="flex items-center gap-2 mb-3 p-2 bg-card rounded-lg border border-border">
                   <select
                     value={payment.method}
                     onChange={(e) => handleSplitChange(payment.id, 'method', e.target.value)}
-                    className="flex-1 p-2 border rounded-lg focus:ring-blue-200 focus:border-blue-400 outline-none"
+                    className="flex-1 p-2 border border-border bg-background text-foreground rounded-lg focus:ring-primary focus:border-primary outline-none"
                   >
                     {paymentMethods.map(method => (
                       <option key={method.id} value={method.id}>{method.label}</option>
@@ -216,13 +216,13 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
                     type="number"
                     value={payment.amount}
                     onChange={(e) => handleSplitChange(payment.id, 'amount', e.target.value)}
-                    className="w-32 p-2 border rounded-lg text-right focus:ring-blue-200 focus:border-blue-400 outline-none"
+                    className="w-32 p-2 border border-border bg-background text-foreground rounded-lg text-right focus:ring-primary focus:border-primary outline-none"
                     placeholder="Miqdor"
                     min="0"
                   />
                   <button
                     onClick={() => removeSplitPayment(payment.id)}
-                    className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                    className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                     disabled={splitPayments.length === 1}
                   >
                     <Trash2 size={20} />
@@ -232,28 +232,28 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
 
               <button
                 onClick={addSplitPayment}
-                className="w-full flex items-center justify-center gap-2 p-2 mt-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                className="w-full flex items-center justify-center gap-2 p-2 mt-3 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-medium border border-primary/20"
               >
                 <Plus size={18} /> To'lov qismi qo'shish
               </button>
 
-              <div className="mt-4 pt-3 border-t border-gray-200 text-sm font-medium">
+              <div className="mt-4 pt-3 border-t border-border text-sm font-medium text-foreground">
                 <div className="flex justify-between mb-1">
                   <span>Jami bo'lingan:</span>
-                  <span className={totalSplitAmount !== totalAmount ? 'text-red-600' : 'text-green-600'}>
+                  <span className={totalSplitAmount !== totalAmount ? 'text-destructive' : 'text-green-500'}>
                     {totalSplitAmount.toLocaleString()} so'm
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Qolgan summa:</span>
-                  <span className={remainingAmount !== 0 ? 'text-red-600' : 'text-green-600'}>
+                  <span className={remainingAmount !== 0 ? 'text-destructive' : 'text-green-500'}>
                     {remainingAmount.toLocaleString()} so'm
                   </span>
                 </div>
               </div>
 
               {splitPayments.some(p => p.method === 'debt') && (
-                <div className="mt-4 p-3 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold">
+                <div className="mt-4 p-3 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 rounded-xl text-sm font-bold">
                   {selectedCustomer
                     ? `Nasiya "${selectedCustomer.name}" nomiga yoziladi.`
                     : "DIQQAT: Nasiya uchun mijoz tanlanmagan!"}
@@ -263,16 +263,16 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
               {splitPayments.map(payment => (
                 payment.method === 'debt' && (
                   <div key={`debt-date-${payment.id}`} className="mt-4">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                    <label className="block text-sm font-bold text-foreground mb-2">
                       {payment.amount.toLocaleString()} so'm nasiya uchun qaytarish sanasi
                     </label>
                     <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
                       <input
                         type="date"
                         value={payment.dueDate}
                         onChange={(e) => handleSplitChange(payment.id, 'dueDate', e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all text-gray-700 font-medium"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-border bg-secondary/20 outline-none focus:border-orange-500 transition-all text-foreground font-medium"
                         min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
@@ -284,14 +284,14 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
 
           {/* Xato xabari */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl flex items-center gap-2 text-sm font-bold animate-pulse">
+            <div className="mb-4 p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl flex items-center gap-2 text-sm font-bold animate-pulse">
               <AlertCircle size={18} /> {error}
             </div>
           )}
 
           {/* Agar Nasiya tanlangan bo'lsa, ogohlantirish (faqat single payment uchun) */}
           {!isSplitPayment && activeMethod === 'debt' && !error && (
-            <div className={`text-center text-sm mb-4 p-2 rounded-lg ${selectedCustomer ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-600 font-bold'}`}>
+            <div className={`text-center text-sm mb-4 p-2 rounded-lg border ${selectedCustomer ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 font-bold'}`}>
               {selectedCustomer
                 ? `Qarz "${selectedCustomer.name}" nomiga yoziladi.`
                 : "DIQQAT: Nasiya uchun mijoz tanlanmagan!"}
@@ -299,7 +299,7 @@ const PaymentModal = ({ isOpen, onClose, totalAmount, onPay, selectedCustomer })
           )}
 
           <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 py-4 text-gray-600 font-bold hover:bg-gray-50 rounded-xl transition-colors">Bekor qilish</button>
+            <button onClick={onClose} className="flex-1 py-4 text-muted-foreground font-bold hover:bg-secondary rounded-xl transition-colors">Bekor qilish</button>
             <button onClick={handlePayment} className="flex-1 py-4 bg-green-500 text-white font-bold rounded-xl shadow-lg hover:bg-green-600 transition-transform active:scale-95">To'lash</button>
           </div>
         </div>

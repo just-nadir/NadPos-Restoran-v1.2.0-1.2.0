@@ -74,13 +74,17 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
   /* ... Helper functions ... */
 
   const handleTableClick = (table) => {
-    onSelectTable(table);
+    const hall = halls.find(h => h.id === table.hall_id);
+    const displayName = hall ? `${hall.name} ${table.name}` : table.name;
+    onSelectTable({ ...table, displayName });
   };
 
   const handleTableDoubleClick = (table) => {
     // Agar stol bo'sh bo'lsa yoki band bo'lsa (qo'shimcha buyurtma uchun)
     if (table.status === 'free' || table.status === 'occupied') {
-      setMenuModal({ isOpen: true, table });
+      const hall = halls.find(h => h.id === table.hall_id);
+      const displayName = hall ? `${hall.name} ${table.name}` : table.name;
+      setMenuModal({ isOpen: true, table: { ...table, name: displayName } });
     }
   };
 
@@ -165,6 +169,8 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
         <div className="flex flex-col gap-2">
           {sortedTables.map((table) => {
             const isSelected = selectedTableId === table.id;
+            const hall = halls.find(h => h.id === table.hall_id);
+            const displayName = hall ? `${hall.name} ${table.name}` : table.name;
 
             return (
               <div
@@ -191,7 +197,7 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
                   {/* Info */}
                   <div className="flex flex-col">
                     <h3 className={cn("font-bold text-lg leading-none mb-1", isSelected ? "text-primary-foreground" : "text-foreground")}>
-                      {table.name}
+                      {displayName}
                     </h3>
                     <div className="flex items-center gap-2 text-sm opacity-90">
                       {table.waiter_name ? (

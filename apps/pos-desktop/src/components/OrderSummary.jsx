@@ -306,7 +306,7 @@ const OrderSummary = ({ table, onDeselect }) => {
             table.status === 'free' ? 'bg-green-50 dark:bg-green-950/30' : 'bg-secondary/30 dark:bg-secondary/10'
         )}>
           <div className="flex justify-between items-center mb-1">
-            <h2 className="text-2xl font-bold text-foreground">{table.name}</h2>
+            <h2 className="text-2xl font-bold text-foreground">{table.displayName || table.name}</h2>
 
             {/* CHEK RAQAMI */}
             {table.current_check_number > 0 && (
