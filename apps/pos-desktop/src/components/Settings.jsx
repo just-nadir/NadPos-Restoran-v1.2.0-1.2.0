@@ -20,11 +20,9 @@ const Settings = () => {
   const [modal, setModal] = useState({ isOpen: false, type: null, id: null, message: '' });
 
   const [settings, setSettings] = useState({
-    restaurantName: "", address: "", phone: "", wifiPassword: "",
-    serviceChargeType: "percent", serviceChargeValue: 0, receiptFooter: "",
-
     printerReceiptIP: "",
     eskiz_email: "", eskiz_password: "", eskiz_nickname: "4546",
+    qr_link: "",
   });
 
   useEffect(() => {
@@ -200,7 +198,20 @@ const Settings = () => {
 
             <div className="bg-card p-8 rounded-3xl shadow-sm border border-border">
               <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3"><Receipt size={28} className="text-orange-500" /> Chek Sozlamalari</h3>
-              <div><label className="block text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Chekosti yozuvi</label><textarea rows="3" name="receiptFooter" value={settings.receiptFooter || ''} onChange={handleChange} className="w-full p-4 bg-secondary/20 rounded-xl border border-border outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-lg font-medium text-foreground resize-none transition-all"></textarea></div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Chekosti yozuvi</label>
+                  <textarea rows="2" name="receiptFooter" value={settings.receiptFooter || ''} onChange={handleChange} className="w-full p-4 bg-secondary/20 rounded-xl border border-border outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-lg font-medium text-foreground resize-none transition-all"></textarea>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">QR Link (Instagram/Telegram)</label>
+                  <div className="relative">
+                    <Send size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input type="text" name="qr_link" value={settings.qr_link || ''} onChange={handleChange} placeholder="https://instagram.com/nadpos" className="w-full h-14 pl-12 pr-4 bg-secondary/20 rounded-xl border border-border outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 font-bold text-lg text-foreground transition-all" />
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground italic">Chekning pastki qismida chiqadigan QR kod uchun havola.</p>
+                </div>
+              </div>
             </div>
           </div>
         )}

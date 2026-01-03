@@ -60,8 +60,6 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
   const filteredTables = tables.filter(table => {
     const isHallMatch = activeHallId === 'all' || table.hall_id === activeHallId;
     const isActiveStatus = showFree ? table.status === 'free' : table.status !== 'free';
-
-    console.log(`Table: ${table.name}, Status: ${table.status}, ShowFree: ${showFree}, SafeActive: ${isActiveStatus}`);
     return isHallMatch && isActiveStatus;
   });
 
@@ -90,12 +88,11 @@ const TablesGrid = ({ onSelectTable, selectedTableId }) => { // Accepted selecte
 
   const handleMenuClose = () => {
     setMenuModal({ isOpen: false, table: null });
+    if (showFree) {
+      setShowFree(false);
+    }
     if (menuModal.table) {
-      // Try to select it after closing if it became occupied
       onSelectTable(menuModal.table);
-      // Note: table status in 'menuModal.table' is stale ('free'), 
-      // but onSelectTable just takes ID/Object. 
-      // Ideally we fetch fresh data, but Global Listener handles that.
     }
   };
 

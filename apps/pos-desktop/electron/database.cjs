@@ -138,16 +138,26 @@ function createV2Tables() {
     db.prepare(`CREATE TABLE IF NOT EXISTS order_items (
         id TEXT PRIMARY KEY,
         table_id TEXT,
+        product_id TEXT,
         product_name TEXT,
         price REAL,
-        quantity INTEGER,
+        quantity REAL,
         destination TEXT DEFAULT 'kitchen',
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(table_id) REFERENCES tables(id) ON DELETE CASCADE
     )`).run();
 
+    // Hotfix: order_items updates
+    try {
+        db.prepare("ALTER TABLE order_items ADD COLUMN quantity REAL").run();
+    } catch (e) { /* Column likely exists */ }
+
+    try {
+        db.prepare("ALTER TABLE order_items ADD COLUMN product_id TEXT").run();
+    } catch (e) { /* Column likely exists */ }
+
     // 4. Savdolar
-    db.prepare(`CREATE TABLE IF NOT EXISTS sales (
+    db.prepare(`CREATE TABLE IF NOT EXISTS sales(
         id TEXT PRIMARY KEY,
         check_number INTEGER,
         date TEXT,
@@ -163,7 +173,7 @@ function createV2Tables() {
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`).run();
 
-    db.prepare(`CREATE TABLE IF NOT EXISTS sale_items (
+    db.prepare(`CREATE TABLE IF NOT EXISTS sale_items(
         id TEXT PRIMARY KEY,
         sale_id TEXT,
         product_name TEXT,
@@ -177,23 +187,23 @@ function createV2Tables() {
     )`).run();
 
     // 5. Mijozlar
-    db.prepare(`CREATE TABLE IF NOT EXISTS customers (
+    db.prepare(`CREATE TABLE IF NOT EXISTS customers(
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         phone TEXT,
         debt REAL DEFAULT 0,
         notes TEXT,
-        type TEXT DEFAULT 'standard', 
-        value INTEGER DEFAULT 0, 
-        balance REAL DEFAULT 0, 
+        type TEXT DEFAULT 'standard',
+        value INTEGER DEFAULT 0,
+        balance REAL DEFAULT 0,
         birthday TEXT,
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, deleted_at TEXT
     )`).run();
 
-    db.prepare(`CREATE TABLE IF NOT EXISTS debt_history (
+    db.prepare(`CREATE TABLE IF NOT EXISTS debt_history(
         id TEXT PRIMARY KEY,
         customer_id TEXT,
-        sale_id TEXT, -- Linked Sale
+        sale_id TEXT, --Linked Sale
         amount REAL,
         type TEXT,
         date TEXT,
@@ -207,7 +217,7 @@ function createV2Tables() {
         db.prepare("ALTER TABLE debt_history ADD COLUMN sale_id TEXT").run();
     } catch (e) { /* Column likely exists */ }
 
-    db.prepare(`CREATE TABLE IF NOT EXISTS customer_debts (
+    db.prepare(`CREATE TABLE IF NOT EXISTS customer_debts(
         id TEXT PRIMARY KEY,
         customer_id TEXT,
         amount REAL,
@@ -220,7 +230,7 @@ function createV2Tables() {
     )`).run();
 
     // 5.1 Bekor qilingan buyurtmalar
-    db.prepare(`CREATE TABLE IF NOT EXISTS cancelled_orders (
+    db.prepare(`CREATE TABLE IF NOT EXISTS cancelled_orders(
         id TEXT PRIMARY KEY,
         table_id TEXT,
         date TEXT,
@@ -232,7 +242,7 @@ function createV2Tables() {
     )`).run();
 
     // 6. Xodimlar
-    db.prepare(`CREATE TABLE IF NOT EXISTS users (
+    db.prepare(`CREATE TABLE IF NOT EXISTS users(
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         pin TEXT UNIQUE,
@@ -242,7 +252,7 @@ function createV2Tables() {
     )`).run();
 
     // 7. Sozlamalar (KEY-VALUE bo'lgani uchun ID UUID bo'lishi shart emas, lekin sync uchun kerak)
-    db.prepare(`CREATE TABLE IF NOT EXISTS settings (
+    db.prepare(`CREATE TABLE IF NOT EXISTS settings(
         key TEXT PRIMARY KEY,
         value TEXT,
         is_synced INTEGER DEFAULT 0,
@@ -250,37 +260,37 @@ function createV2Tables() {
     )`).run();
 
     // 8. Oshxona
-    db.prepare(`CREATE TABLE IF NOT EXISTS kitchens (
-        id TEXT PRIMARY KEY, 
-        name TEXT NOT NULL, 
-        printer_ip TEXT, 
-        printer_port INTEGER DEFAULT 9100, 
+    db.prepare(`CREATE TABLE IF NOT EXISTS kitchens(
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        printer_ip TEXT,
+        printer_port INTEGER DEFAULT 9100,
         printer_type TEXT DEFAULT 'driver',
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, deleted_at TEXT
     )`).run();
 
     // 9. SMS
-    db.prepare(`CREATE TABLE IF NOT EXISTS sms_templates (
-        id TEXT PRIMARY KEY, 
-        type TEXT UNIQUE, 
+    db.prepare(`CREATE TABLE IF NOT EXISTS sms_templates(
+        id TEXT PRIMARY KEY,
+        type TEXT UNIQUE,
         title TEXT,
-        content TEXT, 
+        content TEXT,
         is_active INTEGER DEFAULT 1,
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`).run();
 
-    db.prepare(`CREATE TABLE IF NOT EXISTS sms_logs (
-        id TEXT PRIMARY KEY, 
-        phone TEXT, 
-        message TEXT, 
-        status TEXT, 
-        date TEXT, 
+    db.prepare(`CREATE TABLE IF NOT EXISTS sms_logs(
+        id TEXT PRIMARY KEY,
+        phone TEXT,
+        message TEXT,
+        status TEXT,
+        date TEXT,
         type TEXT,
         server_id TEXT, restaurant_id TEXT, is_synced INTEGER DEFAULT 0, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`).run();
 
     // 11. SHIFTS
-    db.prepare(`CREATE TABLE IF NOT EXISTS shifts (
+    db.prepare(`CREATE TABLE IF NOT EXISTS shifts(
         id TEXT PRIMARY KEY,
         start_time TEXT NOT NULL,
         end_time TEXT,
@@ -344,11 +354,11 @@ function migrateToV2() {
 
         // 1. Rename and Map
         for (const table of tables) {
-            const exists = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='${table}'`).get();
+            const exists = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = '${table}'`).get();
             if (exists) {
                 console.log(`Processing table: ${table}`);
                 db.prepare(`ALTER TABLE ${table} RENAME TO ${table}_old`).run();
-                db.prepare(`CREATE TABLE _map_${table} (old_id INTEGER PRIMARY KEY, new_id TEXT)`).run();
+                db.prepare(`CREATE TABLE _map_${table}(old_id INTEGER PRIMARY KEY, new_id TEXT)`).run();
             }
         }
 
@@ -360,7 +370,7 @@ function migrateToV2() {
         const getNewId = (table, oldId) => {
             if (!oldId) return null;
             try {
-                const res = db.prepare(`SELECT new_id FROM _map_${table} WHERE old_id = ?`).get(oldId);
+                const res = db.prepare(`SELECT new_id FROM _map_${table} WHERE old_id = ? `).get(oldId);
                 return res ? res.new_id : null;
             } catch (e) {
                 // Map table might not exist if source table was missing
@@ -370,7 +380,7 @@ function migrateToV2() {
 
         // Helper to safely migrate data if table exists
         const migrateIfExists = (table, callback) => {
-            const exists = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='${table}_old'`).get();
+            const exists = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = '${table}_old'`).get();
             if (exists) {
                 const rows = db.prepare(`SELECT * FROM ${table}_old`).all();
                 if (rows.length > 0) callback(rows);
@@ -380,7 +390,7 @@ function migrateToV2() {
         // --- PHASE 1: Independent Tables ---
         const simpleMigrate = (table) => {
             migrateIfExists(table, (rows) => {
-                const insertMap = db.prepare(`INSERT INTO _map_${table} (old_id, new_id) VALUES (?, ?)`);
+                const insertMap = db.prepare(`INSERT INTO _map_${table}(old_id, new_id) VALUES(?, ?)`);
                 for (const row of rows) {
                     insertMap.run(row.id, uuidv4());
                 }
@@ -396,7 +406,7 @@ function migrateToV2() {
         migrateIfExists('users', (rows) => {
             rows.forEach(r => {
                 const newId = getNewId('users', r.id);
-                db.prepare(`INSERT INTO users (id, name, pin, role, salt, restaurant_id) VALUES (?, ?, ?, ?, ?, ?)`).run(newId, r.name, r.pin, r.role, r.salt, RESTAURANT_ID);
+                db.prepare(`INSERT INTO users(id, name, pin, role, salt, restaurant_id) VALUES(?, ?, ?, ?, ?, ?)`).run(newId, r.name, r.pin, r.role, r.salt, RESTAURANT_ID);
             });
         });
 
@@ -404,7 +414,7 @@ function migrateToV2() {
         migrateIfExists('kitchens', (rows) => {
             rows.forEach(r => {
                 const newId = getNewId('kitchens', r.id);
-                db.prepare(`INSERT INTO kitchens (id, name, printer_ip, printer_port, printer_type, restaurant_id) VALUES (?, ?, ?, ?, ?, ?)`).run(newId, r.name, r.printer_ip, r.printer_port || 9100, r.printer_type || 'driver', RESTAURANT_ID);
+                db.prepare(`INSERT INTO kitchens(id, name, printer_ip, printer_port, printer_type, restaurant_id) VALUES(?, ?, ?, ?, ?, ?)`).run(newId, r.name, r.printer_ip, r.printer_port || 9100, r.printer_type || 'driver', RESTAURANT_ID);
             });
         });
 
@@ -412,7 +422,7 @@ function migrateToV2() {
         migrateIfExists('categories', (rows) => {
             rows.forEach(r => {
                 const newId = getNewId('categories', r.id);
-                db.prepare(`INSERT INTO categories (id, name, restaurant_id) VALUES (?, ?, ?)`).run(newId, r.name, RESTAURANT_ID);
+                db.prepare(`INSERT INTO categories(id, name, restaurant_id) VALUES(?, ?, ?)`).run(newId, r.name, RESTAURANT_ID);
             });
         });
 
@@ -420,7 +430,7 @@ function migrateToV2() {
         migrateIfExists('halls', (rows) => {
             rows.forEach(r => {
                 const newId = getNewId('halls', r.id);
-                db.prepare(`INSERT INTO halls (id, name, restaurant_id) VALUES (?, ?, ?)`).run(newId, r.name, RESTAURANT_ID);
+                db.prepare(`INSERT INTO halls(id, name, restaurant_id) VALUES(?, ?, ?)`).run(newId, r.name, RESTAURANT_ID);
             });
         });
 
@@ -428,7 +438,7 @@ function migrateToV2() {
         migrateIfExists('customers', (rows) => {
             rows.forEach(r => {
                 const newId = getNewId('customers', r.id);
-                db.prepare(`INSERT INTO customers (id, name, phone, debt, notes, type, value, balance, birthday, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(newId, r.name, r.phone, r.debt, r.notes, r.type || 'standard', r.value || 0, r.balance || 0, r.birthday, RESTAURANT_ID);
+                db.prepare(`INSERT INTO customers(id, name, phone, debt, notes, type, value, balance, birthday, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(newId, r.name, r.phone, r.debt, r.notes, r.type || 'standard', r.value || 0, r.balance || 0, r.birthday, RESTAURANT_ID);
             });
         });
 
@@ -436,7 +446,7 @@ function migrateToV2() {
         migrateIfExists('sms_templates', (rows) => {
             rows.forEach(r => {
                 const newId = getNewId('sms_templates', r.id);
-                db.prepare(`INSERT INTO sms_templates (id, type, title, content, is_active, restaurant_id) VALUES (?, ?, ?, ?, ?, ?)`).run(newId, r.type, r.title, r.content, r.is_active, RESTAURANT_ID);
+                db.prepare(`INSERT INTO sms_templates(id, type, title, content, is_active, restaurant_id) VALUES(?, ?, ?, ?, ?, ?)`).run(newId, r.type, r.title, r.content, r.is_active, RESTAURANT_ID);
             });
         });
 
@@ -444,7 +454,7 @@ function migrateToV2() {
         migrateIfExists('shifts', (rows) => {
             rows.forEach(r => {
                 const newId = getNewId('shifts', r.id);
-                db.prepare(`INSERT INTO shifts (id, start_time, end_time, start_cash, end_cash, declared_cash, declared_card, difference_cash, difference_card, status, cashier_name, total_sales, total_cash, total_card, total_transfer, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+                db.prepare(`INSERT INTO shifts(id, start_time, end_time, start_cash, end_cash, declared_cash, declared_card, difference_cash, difference_card, status, cashier_name, total_sales, total_cash, total_card, total_transfer, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
                     newId, r.start_time, r.end_time, r.start_cash, r.end_cash,
                     r.declared_cash || 0, r.declared_card || 0, r.difference_cash || 0, r.difference_card || 0,
                     r.status, r.cashier_name, r.total_sales, r.total_cash, r.total_card, r.total_transfer, RESTAURANT_ID
@@ -458,12 +468,12 @@ function migrateToV2() {
         migrateIfExists('tables', (rows) => {
             rows.forEach(r => {
                 const newId = uuidv4();
-                db.prepare(`INSERT INTO _map_tables (old_id, new_id) VALUES (?, ?)`).run(r.id, newId);
+                db.prepare(`INSERT INTO _map_tables(old_id, new_id) VALUES(?, ?)`).run(r.id, newId);
 
                 const hallId = getNewId('halls', r.hall_id);
                 const waiterId = r.waiter_id && r.waiter_id !== 0 ? getNewId('users', r.waiter_id) : null;
 
-                db.prepare(`INSERT INTO tables (id, hall_id, name, status, start_time, total_amount, current_check_number, waiter_id, waiter_name, guests, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+                db.prepare(`INSERT INTO tables(id, hall_id, name, status, start_time, total_amount, current_check_number, waiter_id, waiter_name, guests, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
                     newId, hallId, r.name, r.status, r.start_time, r.total_amount, r.current_check_number, waiterId, r.waiter_name, r.guests, RESTAURANT_ID
                 );
             });
@@ -473,7 +483,7 @@ function migrateToV2() {
         migrateIfExists('products', (rows) => {
             rows.forEach(r => {
                 const newId = uuidv4();
-                db.prepare(`INSERT INTO _map_products (old_id, new_id) VALUES (?, ?)`).run(r.id, newId);
+                db.prepare(`INSERT INTO _map_products(old_id, new_id) VALUES(?, ?)`).run(r.id, newId);
 
                 const catId = getNewId('categories', r.category_id);
                 let destId = '1';
@@ -485,7 +495,7 @@ function migrateToV2() {
                     }
                 }
 
-                db.prepare(`INSERT INTO products (id, category_id, name, price, destination, is_active, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
+                db.prepare(`INSERT INTO products(id, category_id, name, price, destination, is_active, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?)`).run(
                     newId, catId, r.name, r.price, destId, r.is_active, RESTAURANT_ID
                 );
             });
@@ -495,12 +505,12 @@ function migrateToV2() {
         migrateIfExists('sales', (rows) => {
             rows.forEach(r => {
                 const newId = uuidv4();
-                db.prepare(`INSERT INTO _map_sales (old_id, new_id) VALUES (?, ?)`).run(r.id, newId);
+                db.prepare(`INSERT INTO _map_sales(old_id, new_id) VALUES(?, ?)`).run(r.id, newId);
 
                 const custId = r.customer_id ? getNewId('customers', r.customer_id) : null;
                 const shiftId = r.shift_id ? getNewId('shifts', r.shift_id) : null;
 
-                db.prepare(`INSERT INTO sales (id, check_number, date, total_amount, subtotal, discount, payment_method, customer_id, waiter_name, guest_count, items_json, shift_id, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+                db.prepare(`INSERT INTO sales(id, check_number, date, total_amount, subtotal, discount, payment_method, customer_id, waiter_name, guest_count, items_json, shift_id, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
                     newId, r.check_number, r.date, r.total_amount, r.subtotal, r.discount, r.payment_method, custId, r.waiter_name, r.guest_count, r.items_json, shiftId, RESTAURANT_ID
                 );
             });
@@ -513,7 +523,7 @@ function migrateToV2() {
             rows.forEach(r => {
                 const tableId = getNewId('tables', r.table_id);
                 if (tableId) {
-                    db.prepare(`INSERT INTO order_items (id, table_id, product_name, price, quantity, destination, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
+                    db.prepare(`INSERT INTO order_items(id, table_id, product_name, price, quantity, destination, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?)`).run(
                         uuidv4(), tableId, r.product_name, r.price, r.quantity, r.destination, RESTAURANT_ID
                     );
                 }
@@ -525,7 +535,7 @@ function migrateToV2() {
             rows.forEach(r => {
                 const saleId = getNewId('sales', r.sale_id);
                 if (saleId) {
-                    db.prepare(`INSERT INTO sale_items (id, sale_id, product_name, category_name, price, quantity, total_price, date, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+                    db.prepare(`INSERT INTO sale_items(id, sale_id, product_name, category_name, price, quantity, total_price, date, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
                         uuidv4(), saleId, r.product_name, r.category_name, r.price, r.quantity, r.total_price, r.date, RESTAURANT_ID
                     );
                 }
@@ -537,7 +547,7 @@ function migrateToV2() {
             rows.forEach(r => {
                 const custId = getNewId('customers', r.customer_id);
                 if (custId) {
-                    db.prepare(`INSERT INTO debt_history (id, customer_id, amount, type, date, comment, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
+                    db.prepare(`INSERT INTO debt_history(id, customer_id, amount, type, date, comment, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?)`).run(
                         uuidv4(), custId, r.amount, r.type, r.date, r.comment, RESTAURANT_ID
                     );
                 }
@@ -549,7 +559,7 @@ function migrateToV2() {
             rows.forEach(r => {
                 const custId = getNewId('customers', r.customer_id);
                 if (custId) {
-                    db.prepare(`INSERT INTO customer_debts (id, customer_id, amount, due_date, last_sms_date, is_paid, created_at, restaurant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
+                    db.prepare(`INSERT INTO customer_debts(id, customer_id, amount, due_date, last_sms_date, is_paid, created_at, restaurant_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`).run(
                         uuidv4(), custId, r.amount, r.due_date, r.last_sms_date, r.is_paid, r.created_at, RESTAURANT_ID
                     );
                 }
@@ -577,7 +587,7 @@ function migrateToV2() {
 function initDB() {
     try {
         const userVersion = db.pragma('user_version', { simple: true });
-        console.log(`ℹ️ Current DB Version: ${userVersion}`);
+        console.log(`ℹ️ Current DB Version: ${userVersion} `);
 
         if (userVersion < 2) {
             // Check if we have V1 tables (e.g., 'users' exists and has INT id?)
@@ -618,7 +628,7 @@ function seedDefaults() {
         if (!adminExists) {
             const { salt, hash } = hashPIN('0000');
             // updated_at ni eski sana bilan kiritamiz, toki serverdagi ma'lumot ustunlik qilsin
-            db.prepare(`INSERT INTO users (id, name, pin, role, salt, restaurant_id, updated_at, is_synced) VALUES (?, 'Admin', ?, 'admin', ?, ?, ?, 0)`).run(ADMIN_ID, hash, salt, RESTAURANT_ID, OLD_DATE);
+            db.prepare(`INSERT INTO users(id, name, pin, role, salt, restaurant_id, updated_at, is_synced) VALUES(?, 'Admin', ?, 'admin', ?, ?, ?, 0)`).run(ADMIN_ID, hash, salt, RESTAURANT_ID, OLD_DATE);
             console.log("✅ Default Admin created: PIN 0000");
         }
     }
@@ -626,13 +636,13 @@ function seedDefaults() {
     // Settings
     const nextCheck = db.prepare("SELECT value FROM settings WHERE key = 'next_check_number'").get();
     if (!nextCheck) {
-        db.prepare(`INSERT INTO settings (key, value, updated_at, is_synced) VALUES ('next_check_number', '1', ?, 0)`).run(OLD_DATE);
+        db.prepare(`INSERT INTO settings(key, value, updated_at, is_synced) VALUES('next_check_number', '1', ?, 0)`).run(OLD_DATE);
     }
 
     // Default Kitchens
     const kCount = db.prepare("SELECT count(*) as count FROM kitchens").get().count;
     if (kCount === 0) {
-        const insertK = db.prepare(`INSERT INTO kitchens (id, name, printer_ip, printer_type, restaurant_id, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, ?, 0)`);
+        const insertK = db.prepare(`INSERT INTO kitchens(id, name, printer_ip, printer_type, restaurant_id, updated_at, is_synced) VALUES(?, ?, ?, ?, ?, ?, 0)`);
         insertK.run(uuidv4(), 'Issiq Oshxona', 'Microsoft Print to PDF', 'driver', RESTAURANT_ID, OLD_DATE);
         insertK.run(uuidv4(), 'Bar', 'Microsoft Print to PDF', 'driver', RESTAURANT_ID, OLD_DATE);
         insertK.run(uuidv4(), 'Sovuq Oshxona', 'Microsoft Print to PDF', 'driver', RESTAURANT_ID, OLD_DATE);
@@ -642,7 +652,7 @@ function seedDefaults() {
     // Default SMS Templates
     const tCount = db.prepare("SELECT count(*) as count FROM sms_templates").get().count;
     if (tCount === 0) {
-        const insertT = db.prepare(`INSERT INTO sms_templates (id, type, title, content, restaurant_id, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, ?, 0)`);
+        const insertT = db.prepare(`INSERT INTO sms_templates(id, type, title, content, restaurant_id, updated_at, is_synced) VALUES(?, ?, ?, ?, ?, ?, 0)`);
         insertT.run(uuidv4(), 'birthday', 'Tug\'ilgan kun', 'Hurmatli {name}! Sizni tug\'ilgan kuningiz bilan tabriklaymiz! Biz bilan bo\'lganingiz uchun rahmat.', RESTAURANT_ID, OLD_DATE);
         insertT.run(uuidv4(), 'debt_reminder', 'Qarz eslatmasi', 'Hurmatli {name}! Sizning {amount} so\'m qarzingiz mavjud. Iltimos, to\'lovni amalga oshiring.', RESTAURANT_ID, OLD_DATE);
         insertT.run(uuidv4(), 'news', 'Yangiliklar', 'Hurmatli {name}! Bizda yangiliklar! ...', RESTAURANT_ID, OLD_DATE);

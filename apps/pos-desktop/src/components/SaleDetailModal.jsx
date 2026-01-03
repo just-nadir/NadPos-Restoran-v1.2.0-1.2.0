@@ -19,7 +19,18 @@ import { formatCurrency } from '../utils/currencyUtils';
 const SaleDetailModal = ({ isOpen, onClose, sale, checkNumber }) => {
     if (!sale) return null;
 
-    const items = sale.items || [];
+    let items = [];
+    try {
+        if (Array.isArray(sale.items)) {
+            items = sale.items;
+        } else if (typeof sale.items === 'string') {
+            items = JSON.parse(sale.items);
+            if (!Array.isArray(items)) items = [];
+        }
+    } catch (e) {
+        console.error("Error parsing sale items:", e);
+        items = [];
+    }
     const total = sale.amount || 0; // Or calculate from items
 
     return (

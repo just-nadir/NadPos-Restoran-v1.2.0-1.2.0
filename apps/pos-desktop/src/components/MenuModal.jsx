@@ -140,9 +140,11 @@ const MenuModal = ({ isOpen, onClose, tableId, tableName }) => {
         if (cart.length === 0 || !window.electron) return;
         try {
             const itemsToSend = cart.map(item => ({
+                id: item.id,
+                productId: item.id,
                 name: item.name,
-                price: item.price,
-                qty: item.qty,
+                price: Number(item.price),
+                qty: Number(item.qty),
                 destination: item.destination
             }));
 

@@ -1,6 +1,7 @@
 const { BrowserWindow } = require('electron');
 const { db } = require('../database.cjs');
 const log = require('electron-log');
+const QRCode = require('qrcode');
 
 // Date Formatter (Uzbekistan Format: DD.MM.YYYY HH:mm)
 function formatDateTime(date = new Date()) {
@@ -41,13 +42,13 @@ function createHtmlTemplate(bodyContent) {
         <style>
             @page { margin: 0; size: 80mm auto; }
             body {
-                font-family: 'Courier New', Courier, monospace;
+                font-family: Arial, Helvetica, sans-serif;
                 width: 72mm;
                 margin: 0;
                 padding: 0;
-                font-size: 12px;
+                font-size: 13px;
                 color: #000000;
-                line-height: 1.2;
+                line-height: 1.4;
             }
             .text-center { text-align: center; }
             .text-right { text-align: right; }
@@ -56,26 +57,27 @@ function createHtmlTemplate(bodyContent) {
             .uppercase { text-transform: uppercase; }
             
             /* Chiziqlar */
-            .line { border-bottom: 1px dashed #000000; margin: 8px 0; }
-            .double-line { border-bottom: 3px double #000000; margin: 8px 0; }
+            .line { border-bottom: 1.5px solid #000000; margin: 8px 0; }
+            .double-line { border-bottom: 3.5px double #000000; margin: 8px 0; }
             
             .flex { display: flex; justify-content: space-between; }
             .mb-1 { margin-bottom: 5px; }
             
             /* Sarlavha */
             .header-title { font-size: 18px; margin-bottom: 5px; font-weight: bold; }
-            .header-info { font-size: 11px; margin-bottom: 2px; }
+            .header-info { font-size: 12px; margin-bottom: 2px; }
             
             /* Jadval */
             table { width: 100%; border-collapse: collapse; margin: 5px 0; }
             td { vertical-align: top; padding: 4px 0; }
-            .col-name { text-align: left; width: 55%; }
-            .col-qty { text-align: center; width: 15%; }
-            .col-price { text-align: right; width: 30%; }
+            .col-name { text-align: left; width: 35%; }
+            .col-qty { text-align: center; width: 12%; }
+            .col-unit-price { text-align: right; width: 25%; }
+            .col-total { text-align: right; width: 28%; }
             
             /* Jami hisob */
             .total-row { font-size: 16px; font-weight: bold; margin-top: 5px; }
-            .footer-msg { font-size: 11px; margin-top: 10px; font-style: italic; }
+            .footer-msg { font-size: 12px; margin-top: 10px; font-weight: bold; }
         </style>
     </head>
     <body>
@@ -153,22 +155,36 @@ module.exports = {
             <tr>
                 <td class="col-name">${item.product_name}</td>
                 <td class="col-qty">${item.quantity}</td>
-                <td class="col-price">${(item.price * item.quantity).toLocaleString()}</td>
+                <td class="col-unit-price">${(item.price).toLocaleString()}</td>
+                <td class="col-total">${(item.price * item.quantity).toLocaleString()}</td>
             </tr>
         `).join('');
 
         const paymentMap = { 'cash': 'Naqd', 'card': 'Karta', 'click': 'Click/Payme', 'debt': 'Nasiya', 'split': 'Bo\'lingan To\'lov' };
-        const paymentMethod = paymentMap[orderData.paymentMethod] || orderData.paymentMethod || 'Naqd';
+        let paymentMethodText = paymentMap[orderData.paymentMethod] || orderData.paymentMethod || 'Naqd';
 
-        // Split payment details section
-        let paymentDetailsHtml = '';
-        if (orderData.paymentMethod === 'split' && orderData.paymentDetails && orderData.paymentDetails.length > 0) {
-            paymentDetailsHtml = orderData.paymentDetails.map((p, i) => `
-                <div class="flex" style="font-size: 11px; margin-left: 10px;">
-                    <span>${i + 1}. ${paymentMap[p.method] || p.method}:</span>
-                    <span>${p.amount.toLocaleString()} so'm</span>
-                </div>
-            `).join('');
+        if (orderData.paymentMethod === 'split' && orderData.paymentDetails) {
+            paymentMethodText = orderData.paymentDetails.map(p => paymentMap[p.method] || p.method).join(', ');
+        }
+
+        // QR Code generation
+        let qrCodeHtml = '';
+        if (settings.qr_link) {
+            try {
+                const qrDataUrl = await QRCode.toDataURL(settings.qr_link, {
+                    margin: 1,
+                    width: 120,
+                    color: { dark: '#000000', light: '#ffffff' }
+                });
+                qrCodeHtml = `
+                    <div class="text-center" style="margin-top: 15px;">
+                        <img src="${qrDataUrl}" style="width: 100px; height: 100px; border: 1px solid #eee;" />
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">Bizni ijtimoiy tarmoqlarda kuzating</div>
+                    </div>
+                `;
+            } catch (qrErr) {
+                log.error("QR kod yaratishda xato:", qrErr);
+            }
         }
 
         const content = `
@@ -196,19 +212,15 @@ module.exports = {
                 <span>Ofitsiant:</span>
                 <span class="bold uppercase" style="font-size: 14px;">${waiterName}</span>
             </div>
-            <div class="flex">
-                <span>To'lov:</span>
-                <span class="bold">${paymentMethod}</span>
-            </div>
-            ${paymentDetailsHtml}
 
             <div class="line"></div>
 
             <table>
-                <tr style="border-bottom: 1px solid #000;">
+                <tr style="border-bottom: 1.5px solid #000;">
                     <td class="col-name bold">Nomi</td>
                     <td class="col-qty bold">Soni</td>
-                    <td class="col-price bold">Summa</td>
+                    <td class="col-unit-price bold">Narxi</td>
+                    <td class="col-total bold">Summa</td>
                 </tr>
                 ${itemsHtml}
             </table>
@@ -220,11 +232,10 @@ module.exports = {
                 <span>${(orderData.subtotal || 0).toLocaleString()}</span>
             </div>
             
-            ${orderData.service > 0 ? `
             <div class="flex">
                 <span>Xizmat:</span>
-                <span>${orderData.service.toLocaleString()}</span>
-            </div>` : ''}
+                <span>${(orderData.service || 0).toLocaleString()}</span>
+            </div>
 
             ${orderData.discount > 0 ? `
             <div class="flex">
@@ -242,6 +253,8 @@ module.exports = {
             <div class="text-center footer-msg">
                 ${footerText}
             </div>
+
+            ${qrCodeHtml}
         `;
 
         const fullHtml = createHtmlTemplate(content);
@@ -263,9 +276,30 @@ module.exports = {
             <tr>
                 <td class="col-name">${item.product_name}</td>
                 <td class="col-qty">${item.quantity}</td>
-                <td class="col-price">${(item.price * item.quantity).toLocaleString()}</td>
+                <td class="col-unit-price">${(item.price).toLocaleString()}</td>
+                <td class="col-total">${(item.price * item.quantity).toLocaleString()}</td>
             </tr>
         `).join('');
+
+        // QR Code generation for Bill
+        let qrCodeHtml = '';
+        if (settings.qr_link) {
+            try {
+                const qrDataUrl = await QRCode.toDataURL(settings.qr_link, {
+                    margin: 1,
+                    width: 120,
+                    color: { dark: '#000000', light: '#ffffff' }
+                });
+                qrCodeHtml = `
+                    <div class="text-center" style="margin-top: 15px;">
+                        <img src="${qrDataUrl}" style="width: 100px; height: 100px; border: 1px solid #eee;" />
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">Menyuni ko'rish uchun skanerlang</div>
+                    </div>
+                `;
+            } catch (qrErr) {
+                log.error("QR kod yaratishda xato:", qrErr);
+            }
+        }
 
         const content = `
             <div class="text-center">
@@ -278,7 +312,7 @@ module.exports = {
             
             <div class="text-center" style="margin: 10px 0;">
                 <div class="bold uppercase" style="font-size: 20px; letter-spacing: 2px;">HISOB</div>
-                <div style="font-size: 11px; color: #555;">(Pre-check)</div>
+                <div style="font-size: 13px; font-weight: bold;">(Pre-check)</div>
             </div>
             
             <div class="line"></div>
@@ -303,10 +337,11 @@ module.exports = {
             <div class="line"></div>
 
             <table>
-                <tr style="border-bottom: 1px solid #000;">
+                <tr style="border-bottom: 1.5px solid #000;">
                     <td class="col-name bold">Nomi</td>
                     <td class="col-qty bold">Soni</td>
-                    <td class="col-price bold">Summa</td>
+                    <td class="col-unit-price bold">Narxi</td>
+                    <td class="col-total bold">Summa</td>
                 </tr>
                 ${itemsHtml}
             </table>
@@ -318,11 +353,10 @@ module.exports = {
                 <span>${(billData.subtotal || 0).toLocaleString()}</span>
             </div>
             
-            ${billData.service > 0 ? `
             <div class="flex">
                 <span>Xizmat:</span>
-                <span>${billData.service.toLocaleString()}</span>
-            </div>` : ''}
+                <span>${(billData.service || 0).toLocaleString()}</span>
+            </div>
 
             <div class="double-line"></div>
 
@@ -331,10 +365,12 @@ module.exports = {
                 <span>${billData.total.toLocaleString()} so'm</span>
             </div>
 
-            <div class="text-center footer-msg" style="margin-top: 15px; border-top: 1px dashed #000; padding-top: 10px;">
+            <div class="text-center footer-msg" style="margin-top: 15px; border-top: 1.5px solid #000; padding-top: 10px;">
                 <div>Yoqimli ishtaxa!</div>
-                <div style="font-size: 10px; color: #666; margin-top: 5px;">(To'lov qilinmadi)</div>
+                <div style="font-size: 11px; margin-top: 5px;">(To'lov qilinmadi)</div>
             </div>
+
+            ${qrCodeHtml}
         `;
 
         const fullHtml = createHtmlTemplate(content);
@@ -420,7 +456,7 @@ module.exports = {
                         <span>Stol:</span>
                         <span style="font-size: 18px;">${tableName}</span>
                     </div>
-                    <div class="flex" style="border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px;">
+                    <div class="flex" style="border-bottom: 1.5px solid #000; padding-bottom: 5px; margin-bottom: 5px;">
                         <span style="font-weight: bold;">Ofitsiant:</span>
                         <span class="uppercase bold" style="font-size: 16px;">${waiterName || "-"}</span>
                     </div>
@@ -508,7 +544,7 @@ module.exports = {
                 <span>Kassa Boshida:</span>
                 <span>${shiftReport.startCash?.toLocaleString()}</span>
             </div>
-            <div class="flex" style="border-top: 1px dashed #ccc;">
+            <div class="flex" style="border-top: 1.5px solid #000;">
                 <span>Kutilayotgan:</span>
                 <span>${shiftReport.expectedCash?.toLocaleString()}</span>
             </div>

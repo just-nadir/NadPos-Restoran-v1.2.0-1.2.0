@@ -123,13 +123,26 @@ async function pushChanges() {
                     if ((table === 'sales' || table === 'cancelled_orders') && clean.items_json) {
                         try {
                             const items = JSON.parse(clean.items_json);
-                            if (Array.isArray(items)) {
-                                const cleanItems = items.map(item => ({
+                            let itemsArray = items;
+                            let isSplit = false;
+
+                            if (!Array.isArray(items) && items.items && Array.isArray(items.items)) {
+                                itemsArray = items.items;
+                                isSplit = true;
+                            }
+
+                            if (Array.isArray(itemsArray)) {
+                                const cleanItems = itemsArray.map(item => ({
                                     ...item,
                                     quantity: typeof item.quantity === 'number' ? Number(item.quantity.toFixed(4)) : item.quantity,
                                     price: typeof item.price === 'number' ? Number(item.price) : item.price
                                 }));
-                                clean.items_json = JSON.stringify(cleanItems);
+
+                                if (isSplit) {
+                                    clean.items_json = JSON.stringify({ ...items, items: cleanItems });
+                                } else {
+                                    clean.items_json = JSON.stringify(cleanItems);
+                                }
                             } else {
                                 console.warn(`items_json is not an array for ${table} ${clean.id}`);
                             }

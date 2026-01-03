@@ -39,14 +39,15 @@ module.exports = {
 
             let checkNumber = 0;
             const addItemTransaction = db.transaction((item) => {
-                const { tableId, productName, price, quantity, destination } = item;
+                const { tableId, productId, productName, price, quantity, destination } = item;
+                const qtyNum = Number(quantity);
                 checkNumber = getOrCreateCheckNumber(tableId);
                 const id = crypto.randomUUID();
 
-                db.prepare(`INSERT INTO order_items (id, table_id, product_name, price, quantity, destination) VALUES (?, ?, ?, ?, ?, ?)`).run(id, tableId, productName, price, quantity, destination);
+                db.prepare(`INSERT INTO order_items (id, table_id, product_id, product_name, price, quantity, destination) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(id, tableId, productId, productName, price, qtyNum, destination);
 
                 const currentTable = db.prepare('SELECT total_amount, waiter_name FROM tables WHERE id = ?').get(tableId);
-                const newTotal = (currentTable ? currentTable.total_amount : 0) + (price * quantity);
+                const newTotal = (currentTable ? currentTable.total_amount : 0) + (price * qtyNum);
 
                 let waiterName = currentTable.waiter_name;
                 if (!waiterName || waiterName === 'Noma\'lum') {
@@ -89,7 +90,7 @@ module.exports = {
                 checkNumber = getOrCreateCheckNumber(tableId);
 
                 let additionalTotal = 0;
-                const insertStmt = db.prepare(`INSERT INTO order_items (id, table_id, product_name, price, quantity, destination) VALUES (?, ?, ?, ?, ?, ?)`);
+                const insertStmt = db.prepare(`INSERT INTO order_items (id, table_id, product_id, product_name, price, quantity, destination) VALUES (?, ?, ?, ?, ?, ?, ?)`);
 
                 const productStmt = db.prepare('SELECT destination FROM products WHERE name = ?');
                 const validatedItems = [];
@@ -114,15 +115,16 @@ module.exports = {
                         actualDestination = getDefaultKitchen();
                     }
 
-                    insertStmt.run(crypto.randomUUID(), tableId, item.name, item.price, item.qty, actualDestination);
-                    additionalTotal += (item.price * item.qty);
+                    const qtyNum = Number(item.qty);
+                    insertStmt.run(crypto.randomUUID(), tableId, item.productId || item.id, item.name, item.price, qtyNum, actualDestination);
+                    additionalTotal += (item.price * qtyNum);
 
                     validatedItems.push({
                         name: item.name,
                         product_name: item.name,
                         price: item.price,
-                        qty: item.qty,
-                        quantity: item.qty,
+                        qty: qtyNum,
+                        quantity: qtyNum,
                         destination: actualDestination
                     });
                 }
@@ -153,8 +155,13 @@ module.exports = {
 
             setTimeout(async () => {
                 try {
-                    const freshTable = db.prepare('SELECT name, waiter_name FROM tables WHERE id = ?').get(tableId);
-                    const tableName = freshTable ? freshTable.name : "Stol";
+                    const freshTable = db.prepare(`
+                        SELECT t.name as table_name, h.name as hall_name, t.waiter_name 
+                        FROM tables t 
+                        LEFT JOIN halls h ON t.hall_id = h.id 
+                        WHERE t.id = ?
+                    `).get(tableId);
+                    const tableName = freshTable ? `${freshTable.hall_name} ${freshTable.table_name}` : "Stol";
                     const nameToPrint = (waiterName && waiterName !== "Noma'lum") ? waiterName : (freshTable.waiter_name || "Kassir");
 
                     log.info(`📄 Printer uchun tayyor: ${validatedItems.length} ta taom, Check #${checkNumber}`);
@@ -174,7 +181,12 @@ module.exports = {
 
     printCheck: async (tableId) => {
         try {
-            const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(tableId);
+            const table = db.prepare(`
+                SELECT t.*, h.name as hall_name 
+                FROM tables t 
+                LEFT JOIN halls h ON t.hall_id = h.id 
+                WHERE t.id = ?
+            `).get(tableId);
             if (!table) {
                 throw new Error('Stol topilmadi');
             }
@@ -208,7 +220,7 @@ module.exports = {
 
             await printerService.printBill({
                 checkNumber,
-                tableName: table.name,
+                tableName: `${table.hall_name} ${table.name}`,
                 waiterName: table.waiter_name || 'Ofitsiant',
                 items,
                 subtotal,
@@ -242,7 +254,12 @@ module.exports = {
                 const activeShift = shiftController.getShiftStatus(); // YANGI: Smena ID ni olish
                 if (!activeShift) throw new Error("Smena ochilmagan!");
 
-                const table = db.prepare('SELECT current_check_number, waiter_name, guests FROM tables WHERE id = ?').get(tableId);
+                const table = db.prepare(`
+                    SELECT t.current_check_number, t.waiter_name, t.guests, t.name as table_name, h.name as hall_name 
+                    FROM tables t 
+                    LEFT JOIN halls h ON t.hall_id = h.id 
+                    WHERE t.id = ?
+                `).get(tableId);
                 checkNumber = table ? table.current_check_number : 0;
 
                 // Fix: Agar checkNumber 0 bo'lsa (masalan to'g'ridan-to'g'ri kassadan yopilganda), yangisini generatsiya qilamiz
@@ -269,19 +286,27 @@ module.exports = {
 
                 // --- YANGI: SKLAD (Stock) ni kamaytirish ---
                 items.forEach(item => {
-                    // Item product_name orqali product_id ni topishimiz kerak.
-                    // Lekin items arrayida product_id bo'lmasligi mumkin (chunki order_items da faqat name saqlanadi).
-                    // Shuning uchun name orqali qidiramiz.
-                    const product = db.prepare('SELECT id, stock FROM products WHERE name = ?').get(item.product_name);
+                    // Qoldiqni kamaytirish: Avval ID orqali, topilmasa nomi orqali (Backward compatibility)
+                    let product = null;
+                    if (item.product_id) {
+                        product = db.prepare('SELECT id, stock FROM products WHERE id = ?').get(item.product_id);
+                    }
+                    if (!product) {
+                        product = db.prepare('SELECT id, stock FROM products WHERE name = ?').get(item.product_name);
+                    }
+
                     if (product) {
-                        const newStock = (product.stock || 0) - item.quantity;
+                        const qtyNum = Number(item.quantity);
+                        const currentStock = Number(product.stock || 0);
+                        const newStock = currentStock - qtyNum;
+
                         db.prepare('UPDATE products SET stock = ?, is_synced = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newStock, product.id);
 
                         // History
                         db.prepare(`INSERT INTO stock_history (
                             id, product_id, quantity, current_stock, type, reason, date, user_name, server_id, restaurant_id, is_synced
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`).run(
-                            crypto.randomUUID(), product.id, item.quantity, newStock, 'sale', `Savdo #${checkNumber}`, date, waiterName, null, require('../database.cjs').RESTAURANT_ID
+                            crypto.randomUUID(), product.id, qtyNum, newStock, 'sale', `Savdo #${checkNumber}`, date, waiterName, null, require('../database.cjs').RESTAURANT_ID
                         );
                     }
                 });
@@ -331,7 +356,13 @@ module.exports = {
 
             setTimeout(async () => {
                 try {
-                    const tableName = db.prepare('SELECT name FROM tables WHERE id = ?').get(tableId)?.name || "Stol";
+                    const tableInfo = db.prepare(`
+                        SELECT t.name as table_name, h.name as hall_name 
+                        FROM tables t 
+                        LEFT JOIN halls h ON t.hall_id = h.id 
+                        WHERE t.id = ?
+                    `).get(tableId);
+                    const tableName = tableInfo ? `${tableInfo.hall_name} ${tableInfo.table_name}` : "Stol";
                     const service = total - (subtotal - discount);
 
                     await printerService.printOrderReceipt({
@@ -467,8 +498,8 @@ module.exports = {
                 if (!item) throw new Error("Mahsulot topilmadi");
 
                 const tableId = item.table_id;
-                const price = item.price;
-                const quantity = item.quantity;
+                const price = Number(item.price);
+                const quantity = Number(item.quantity);
                 const totalItemPrice = price * quantity;
 
                 // 2. O'chirish
@@ -516,19 +547,20 @@ module.exports = {
                 if (!item) throw new Error("Mahsulot topilmadi");
 
                 const tableId = item.table_id;
-                const price = item.price;
-                const oldQuantity = item.quantity;
+                const price = Number(item.price);
+                const oldQuantity = Number(item.quantity);
+                const returnQty = Number(quantity);
 
-                if (quantity > oldQuantity) {
+                if (returnQty > oldQuantity) {
                     throw new Error("Qaytariladigan miqdor mavjud miqdordan ko'p bo'lishi mumkin emas");
                 }
 
                 // Agar to'liq qaytarilayotgan bo'lsa
-                if (quantity === oldQuantity) {
+                if (returnQty === oldQuantity) {
                     db.prepare('DELETE FROM order_items WHERE id = ?').run(itemId);
                 } else {
                     // Qisman qaytarish
-                    db.prepare('UPDATE order_items SET quantity = quantity - ? WHERE id = ?').run(quantity, itemId);
+                    db.prepare('UPDATE order_items SET quantity = quantity - ? WHERE id = ?').run(returnQty, itemId);
                 }
 
                 // 2. Bekor qilinganlar ro'yxatiga qo'shish (Audit uchun)
@@ -548,7 +580,7 @@ module.exports = {
 
                 // 3. Stol summasini yangilash
                 const currentTable = db.prepare('SELECT total_amount FROM tables WHERE id = ?').get(tableId);
-                let newTotal = (currentTable ? currentTable.total_amount : 0) - (price * quantity);
+                let newTotal = (currentTable ? Number(currentTable.total_amount) : 0) - (price * returnQty);
                 if (newTotal < 0) newTotal = 0;
 
                 const remainingItems = db.prepare('SELECT count(*) as count FROM order_items WHERE table_id = ?').get(tableId).count;

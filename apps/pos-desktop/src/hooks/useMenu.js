@@ -7,9 +7,9 @@ export const useMenu = (apiUrl) => {
   const [activeCategory, setActiveCategory] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const loadMenu = async () => {
-    // Agar ma'lumot allaqachon bo'lsa, qayta yuklamaymiz
-    if (categories.length > 0) return;
+  const loadMenu = async (force = false) => {
+    // Agar ma'lumot allaqachon bo'lsa va force bo'lmasa, qayta yuklamaymiz
+    if (!force && categories.length > 0) return;
 
     setLoading(true);
     try {
