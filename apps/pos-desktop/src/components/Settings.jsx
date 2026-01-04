@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Printer, Database, Store, Receipt, Percent, RefreshCw, ChefHat, Plus, Trash2, Users, Shield, Key, Coins, CheckCircle, PcCase, MessageSquare, Send, FileText, History, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Printer, Database, Store, Receipt, Percent, RefreshCw, ChefHat, Plus, Trash2, Users, Shield, Key, Coins, CheckCircle, PcCase, MessageSquare, Send, FileText, History, Settings as SettingsIcon, Smartphone } from 'lucide-react';
+import QRCode from "react-qr-code";
 import ConfirmModal from './ConfirmModal';
 import { formatDate } from '../utils/dateUtils';
 import { cn } from '../utils/cn';
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState('general'); // Tabs: general, users, printer_settings
+  const [activeTab, setActiveTab] = useState('general'); // Tabs: general, users, printer_settings, mobile
   const [loading, setLoading] = useState(false);
   const [kitchens, setKitchens] = useState([]);
   const [users, setUsers] = useState([]);
   const [notification, setNotification] = useState(null);
   const [systemPrinters, setSystemPrinters] = useState([]);
+  const [systemInfo, setSystemInfo] = useState(null); // { ip: string, port: number }
 
 
 
@@ -37,6 +39,15 @@ const Settings = () => {
   }, [notification]);
 
   const showNotify = (type, msg) => setNotification({ type, msg });
+
+  useEffect(() => {
+    if (activeTab === 'mobile') {
+      fetch('http://localhost:3000/api/system/info')
+        .then(res => res.json())
+        .then(data => setSystemInfo(data))
+        .catch(err => console.error("System info error:", err));
+    }
+  }, [activeTab]);
 
   const loadAllData = async () => {
     if (!window.electron) return;
@@ -165,6 +176,7 @@ const Settings = () => {
           <button onClick={() => setActiveTab('general')} className={cn("w-full text-left px-6 h-14 rounded-2xl font-bold flex items-center gap-4 transition-all text-lg", activeTab === 'general' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'text-muted-foreground hover:bg-secondary hover:text-foreground')}><Store size={24} /> Umumiy</button>
           <button onClick={() => setActiveTab('users')} className={cn("w-full text-left px-6 h-14 rounded-2xl font-bold flex items-center gap-4 transition-all text-lg", activeTab === 'users' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'text-muted-foreground hover:bg-secondary hover:text-foreground')}><Users size={24} /> Xodimlar</button>
           <button onClick={() => setActiveTab('printer_settings')} className={cn("w-full text-left px-6 h-14 rounded-2xl font-bold flex items-center gap-4 transition-all text-lg", activeTab === 'printer_settings' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'text-muted-foreground hover:bg-secondary hover:text-foreground')}><Printer size={24} /> Printerlar</button>
+          <button onClick={() => setActiveTab('mobile')} className={cn("w-full text-left px-6 h-14 rounded-2xl font-bold flex items-center gap-4 transition-all text-lg", activeTab === 'mobile' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'text-muted-foreground hover:bg-secondary hover:text-foreground')}><Smartphone size={24} /> Mobil Ilova</button>
         </div>
         <div className="mt-auto">
           <button onClick={handleSaveSettings} disabled={loading} className="w-full bg-blue-600 text-white h-16 rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-700 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-70 text-xl">
@@ -344,6 +356,48 @@ const Settings = () => {
                     <p>Hozircha oshxonalar yo'q</p>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- MOBILE APP CONNECTION --- */}
+        {activeTab === 'mobile' && (
+          <div className="max-w-3xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-card p-8 rounded-3xl shadow-sm border border-border">
+              <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                <Smartphone size={28} className="text-blue-500" /> Mobil Ilova Ulanishi
+              </h3>
+              <div className="flex flex-col items-center justify-center p-8 bg-white/50 rounded-2xl border border-dashed border-border">
+                {systemInfo ? (
+                  <>
+                    <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
+                      <QRCode
+                        value={JSON.stringify({
+                          ip: systemInfo.ip,
+                          port: systemInfo.port
+                        })}
+                        size={220}
+                        level="M"
+                      />
+                    </div>
+                    <p className="text-xl font-bold text-foreground mb-2">QR Kodni Skanerlang</p>
+                    <div className="text-center text-muted-foreground text-sm font-mono bg-secondary/30 px-4 py-2 rounded-lg border border-border">
+                      {systemInfo.ip}:{systemInfo.port}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-muted-foreground animate-pulse p-10">IP Manzil aniqlanmoqda...</div>
+                )}
+              </div>
+              <div className="mt-8 space-y-4">
+                <h4 className="font-bold text-lg text-foreground">Yo'riqnoma:</h4>
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground text-lg">
+                  <li>Ofitsiant telefonida <b>NadPos Waiter</b> ilovasini oching.</li>
+                  <li>Kirish oynasida <b>"QR Scan"</b> tugmasini bosing.</li>
+                  <li>Kamerani yuqoridagi kodga qarating.</li>
+                  <li>Tizim avtomatik ulanadi.</li>
+                </ol>
               </div>
             </div>
           </div>

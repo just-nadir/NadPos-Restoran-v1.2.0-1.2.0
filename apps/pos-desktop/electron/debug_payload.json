@@ -1,86 +1,12 @@
 {
-  "restaurantId": "5a2f9e15-8d48-4d15-985d-69f6f3dc8b55",
+  "restaurantId": "b6a054b1-4a7c-480a-8054-bca1247145a9",
   "tables": {
-    "products": [
+    "settings": [
       {
-        "id": "bcc73ad9-26aa-4930-8617-dc9c146d41ab",
-        "category_id": "be2560ed-4354-489b-a682-b6d88c3732d9",
-        "name": "Baliq Sazan",
-        "price": 120000,
-        "destination": "b5ff4460-05d2-46ba-809a-65de5734c4d5",
-        "is_active": 1,
-        "unit_type": "kg",
-        "server_id": null,
-        "restaurant_id": "5a2f9e15-8d48-4d15-985d-69f6f3dc8b55",
+        "key": "last_pulled_at",
+        "value": "2026-01-04T16:10:36.244Z",
         "is_synced": 0,
-        "updated_at": "2026-01-03T07:01:30.000Z",
-        "deleted_at": null,
-        "stock": 7
-      },
-      {
-        "id": "73911919-1027-432b-98b9-f66b80cf2c20",
-        "category_id": "c3cbff6f-2abd-4bce-91b4-7572cb86e993",
-        "name": "Shashlik kuskavoy",
-        "price": 18000,
-        "destination": "b5ff4460-05d2-46ba-809a-65de5734c4d5",
-        "is_active": 1,
-        "unit_type": "item",
-        "server_id": null,
-        "restaurant_id": "5a2f9e15-8d48-4d15-985d-69f6f3dc8b55",
-        "is_synced": 0,
-        "updated_at": "2026-01-03T07:01:30.000Z",
-        "deleted_at": null,
-        "stock": -34
-      }
-    ],
-    "sales": [
-      {
-        "id": "f1198853-5598-4bc6-837d-25e268a58e72",
-        "check_number": 32,
-        "date": "2026-01-03T12:01:30.916Z",
-        "total_amount": 96000,
-        "subtotal": 96000,
-        "discount": 0,
-        "payment_method": "split",
-        "customer_id": "9b82fd18-e231-4e23-8d63-42b207e0d975",
-        "waiter_name": "Ali",
-        "guest_count": 1,
-        "items_json": "{\"items\":[{\"id\":\"aaba5782-5daf-434b-987e-618827cd8e6b\",\"table_id\":\"4946e050-65bd-41d1-a8ed-a2cad266de9c\",\"product_name\":\"Baliq Sazan\",\"price\":120000,\"quantity\":0.5,\"destination\":\"7dbdcfcc-bb9a-43d2-ab80-2e8410f0616b\",\"server_id\":null,\"restaurant_id\":null,\"is_synced\":1,\"updated_at\":\"2026-01-03 12:00:46\",\"product_id\":\"bcc73ad9-26aa-4930-8617-dc9c146d41ab\"},{\"id\":\"37ef250c-d77f-44de-964a-6ecac4aa3010\",\"table_id\":\"4946e050-65bd-41d1-a8ed-a2cad266de9c\",\"product_name\":\"Shashlik kuskavoy\",\"price\":18000,\"quantity\":2,\"destination\":\"b5ff4460-05d2-46ba-809a-65de5734c4d5\",\"server_id\":null,\"restaurant_id\":null,\"is_synced\":1,\"updated_at\":\"2026-01-03 12:00:46\",\"product_id\":\"73911919-1027-432b-98b9-f66b80cf2c20\"}],\"paymentDetails\":[{\"method\":\"debt\",\"amount\":96000,\"dueDate\":\"2026-01-23\"}]}",
-        "shift_id": "835f6e9b-1ca2-4aa7-8409-3c1e440f7101",
-        "server_id": null,
-        "restaurant_id": null,
-        "is_synced": 0,
-        "updated_at": "2026-01-03T07:01:30.000Z"
-      }
-    ],
-    "debt_history": [
-      {
-        "id": "55cb6365-a15c-4580-b070-fb93244771f4",
-        "customer_id": "9b82fd18-e231-4e23-8d63-42b207e0d975",
-        "amount": 96000,
-        "type": "debt",
-        "date": "2026-01-03T12:01:30.916Z",
-        "comment": "Savdo #32 (Ali) - Split",
-        "server_id": null,
-        "restaurant_id": null,
-        "is_synced": 0,
-        "updated_at": "2026-01-03T07:01:30.000Z",
-        "sale_id": "f1198853-5598-4bc6-837d-25e268a58e72"
-      }
-    ],
-    "customer_debts": [
-      {
-        "id": "c9e716b5-eb3e-4660-9a73-2d21de19abc3",
-        "customer_id": "9b82fd18-e231-4e23-8d63-42b207e0d975",
-        "amount": 96000,
-        "due_date": "2026-01-23T00:00:00.000Z",
-        "last_sms_date": null,
-        "is_paid": 0,
-        "created_at": "2026-01-03T12:01:30.916Z",
-        "server_id": null,
-        "restaurant_id": null,
-        "is_synced": 0,
-        "updated_at": "2026-01-03T07:01:30.000Z"
+        "updated_at": "2026-01-04T11:10:36.000Z"
       }
     ]
   }

@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+dist/
+web-build/
+
+# Ignore other monorepo apps to prevent dependency install issues
+apps/pos-desktop/
+apps/cloud-server/
+apps/cloud-admin/
+apps/website/
+apps/license-manager/

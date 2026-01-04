@@ -113,6 +113,16 @@ function startServer() {
     }
   });
 
+  // SYSTEM INFO API (QR Code uchun)
+  app.get('/api/system/info', (req, res) => {
+    try {
+      const localIp = ip.address();
+      res.json({ ip: localIp, port: PORT });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.get('/api/halls', (req, res) => {
     try { res.json(tableController.getHalls()); } catch (e) { res.status(500).json({ error: e.message }); }
   });
