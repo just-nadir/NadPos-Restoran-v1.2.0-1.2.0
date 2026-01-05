@@ -31,12 +31,7 @@ const PinLogin = () => {
         const { ipcRenderer } = window.electron;
         const user = await ipcRenderer.invoke('login', pin);
 
-        // Ofitsiantlarni bloklash (Desktopda faqat Admin/Kassir)
-        if (user.role === 'waiter') {
-          setError("Ofitsiantlar mobil ilovadan foydalanishi kerak!");
-          setPin('');
-          return;
-        }
+
 
         login(user); // Global Context orqali login qilish
       }

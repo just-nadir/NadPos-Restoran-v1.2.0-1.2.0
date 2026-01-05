@@ -8,7 +8,7 @@ import Onboarding from './components/Onboarding';
 
 // Lazy loading - Code Splitting
 const DesktopLayout = lazy(() => import('./components/DesktopLayout'));
-const WaiterApp = lazy(() => import('./mobile/WaiterApp'));
+
 
 function App() {
   const [configChecked, setConfigChecked] = useState(false);
@@ -93,7 +93,7 @@ function App() {
               <Route path="/" element={<DesktopLayout />} />
 
               {/* Mobil Ofitsiant ilovasi */}
-              <Route path="/waiter" element={<WaiterApp />} />
+
             </Routes>
           </Suspense>
         </Router>

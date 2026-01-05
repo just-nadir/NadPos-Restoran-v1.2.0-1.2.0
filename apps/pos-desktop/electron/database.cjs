@@ -621,17 +621,12 @@ function initDB() {
 function seedDefaults() {
     const OLD_DATE = '2000-01-01T00:00:00.000Z';
 
-    // Admin (Random UUID to avoid global conflicts)
-    const ADMIN_ID = uuidv4();
-    const adminExists = db.prepare("SELECT * FROM users WHERE role = 'admin'").get();
-    if (!adminExists) {
-        if (!adminExists) {
-            const { salt, hash } = hashPIN('0000');
-            // updated_at ni eski sana bilan kiritamiz, toki serverdagi ma'lumot ustunlik qilsin
-            db.prepare(`INSERT INTO users(id, name, pin, role, salt, restaurant_id, updated_at, is_synced) VALUES(?, 'Admin', ?, 'admin', ?, ?, ?, 0)`).run(ADMIN_ID, hash, salt, RESTAURANT_ID, OLD_DATE);
-            console.log("✅ Default Admin created: PIN 0000");
-        }
-    }
+    // Admin seeding removed per user request (0 db start)
+    // const ADMIN_ID = uuidv4();
+    // const adminExists = db.prepare("SELECT * FROM users WHERE role = 'admin'").get();
+    // if (!adminExists) {
+    //     // ...
+    // }
 
     // Settings
     const nextCheck = db.prepare("SELECT value FROM settings WHERE key = 'next_check_number'").get();
@@ -639,25 +634,8 @@ function seedDefaults() {
         db.prepare(`INSERT INTO settings(key, value, updated_at, is_synced) VALUES('next_check_number', '1', ?, 0)`).run(OLD_DATE);
     }
 
-    // Default Kitchens
-    const kCount = db.prepare("SELECT count(*) as count FROM kitchens").get().count;
-    if (kCount === 0) {
-        const insertK = db.prepare(`INSERT INTO kitchens(id, name, printer_ip, printer_type, restaurant_id, updated_at, is_synced) VALUES(?, ?, ?, ?, ?, ?, 0)`);
-        insertK.run(uuidv4(), 'Issiq Oshxona', 'Microsoft Print to PDF', 'driver', RESTAURANT_ID, OLD_DATE);
-        insertK.run(uuidv4(), 'Bar', 'Microsoft Print to PDF', 'driver', RESTAURANT_ID, OLD_DATE);
-        insertK.run(uuidv4(), 'Sovuq Oshxona', 'Microsoft Print to PDF', 'driver', RESTAURANT_ID, OLD_DATE);
-        console.log("✅ Default Kitchens created.");
-    }
-
-    // Default SMS Templates
-    const tCount = db.prepare("SELECT count(*) as count FROM sms_templates").get().count;
-    if (tCount === 0) {
-        const insertT = db.prepare(`INSERT INTO sms_templates(id, type, title, content, restaurant_id, updated_at, is_synced) VALUES(?, ?, ?, ?, ?, ?, 0)`);
-        insertT.run(uuidv4(), 'birthday', 'Tug\'ilgan kun', 'Hurmatli {name}! Sizni tug\'ilgan kuningiz bilan tabriklaymiz! Biz bilan bo\'lganingiz uchun rahmat.', RESTAURANT_ID, OLD_DATE);
-        insertT.run(uuidv4(), 'debt_reminder', 'Qarz eslatmasi', 'Hurmatli {name}! Sizning {amount} so\'m qarzingiz mavjud. Iltimos, to\'lovni amalga oshiring.', RESTAURANT_ID, OLD_DATE);
-        insertT.run(uuidv4(), 'news', 'Yangiliklar', 'Hurmatli {name}! Bizda yangiliklar! ...', RESTAURANT_ID, OLD_DATE);
-        console.log("✅ Default SMS Templates created.");
-    }
+    // Default Kitchens seeding removed
+    // Default SMS Templates seeding removed
 }
 
 module.exports = { db, initDB, onChange, notify, hashPIN, uuidv4, RESTAURANT_ID };

@@ -1,12 +1,91 @@
 {
   "restaurantId": "b6a054b1-4a7c-480a-8054-bca1247145a9",
   "tables": {
-    "settings": [
+    "tables": [
       {
-        "key": "last_pulled_at",
-        "value": "2026-01-04T16:10:36.244Z",
+        "id": "5683cf3e-78a3-4317-81db-dd973a6d9357",
+        "hall_id": "4dfb318b-bfcf-41b8-a8c8-827de15c613c",
+        "name": "1",
+        "status": "free",
+        "start_time": null,
+        "total_amount": 0,
+        "current_check_number": 0,
+        "waiter_id": null,
+        "waiter_name": null,
+        "guests": 0,
+        "server_id": null,
+        "restaurant_id": null,
         "is_synced": 0,
-        "updated_at": "2026-01-04T11:10:36.000Z"
+        "updated_at": "2026-01-05T01:34:59.000Z",
+        "deleted_at": null
+      },
+      {
+        "id": "07d80265-8703-4873-a74c-e032ecf8789d",
+        "hall_id": "4dfb318b-bfcf-41b8-a8c8-827de15c613c",
+        "name": "2",
+        "status": "free",
+        "start_time": null,
+        "total_amount": 0,
+        "current_check_number": 0,
+        "waiter_id": null,
+        "waiter_name": null,
+        "guests": 0,
+        "server_id": null,
+        "restaurant_id": null,
+        "is_synced": 0,
+        "updated_at": "2026-01-05T01:35:02.000Z",
+        "deleted_at": null
+      },
+      {
+        "id": "53599f9a-9a6e-4d07-aaf0-a6ea271d3031",
+        "hall_id": "4dfb318b-bfcf-41b8-a8c8-827de15c613c",
+        "name": "3",
+        "status": "free",
+        "start_time": null,
+        "total_amount": 0,
+        "current_check_number": 0,
+        "waiter_id": null,
+        "waiter_name": null,
+        "guests": 0,
+        "server_id": null,
+        "restaurant_id": null,
+        "is_synced": 0,
+        "updated_at": "2026-01-05T01:35:04.000Z",
+        "deleted_at": null
+      },
+      {
+        "id": "c542fa4b-5833-4580-b266-b33c98bb4d65",
+        "hall_id": "4dfb318b-bfcf-41b8-a8c8-827de15c613c",
+        "name": "4",
+        "status": "free",
+        "start_time": null,
+        "total_amount": 0,
+        "current_check_number": 0,
+        "waiter_id": null,
+        "waiter_name": null,
+        "guests": 0,
+        "server_id": null,
+        "restaurant_id": null,
+        "is_synced": 0,
+        "updated_at": "2026-01-05T01:35:06.000Z",
+        "deleted_at": null
+      },
+      {
+        "id": "9b31b9fa-84ef-42d7-b59f-254a1134c67f",
+        "hall_id": "4dfb318b-bfcf-41b8-a8c8-827de15c613c",
+        "name": "5",
+        "status": "free",
+        "start_time": null,
+        "total_amount": 0,
+        "current_check_number": 0,
+        "waiter_id": null,
+        "waiter_name": null,
+        "guests": 0,
+        "server_id": null,
+        "restaurant_id": null,
+        "is_synced": 0,
+        "updated_at": "2026-01-05T01:35:08.000Z",
+        "deleted_at": null
       }
     ]
   }
