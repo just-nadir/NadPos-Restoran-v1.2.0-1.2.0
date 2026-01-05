@@ -44,21 +44,31 @@ export const NetworkProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     const connect = (ip: string, port: number) => {
-        const url = `http://${ip}:${port}`;
+        // Ensure protocol. Default to http for local IPs unless 443
+        let protocol = 'http';
+        if (port === 443) protocol = 'https';
+
+        const url = `${protocol}://${ip}:${port}`;
         setServerUrl(url);
 
         if (socket) socket.disconnect();
 
         console.log(`Connecting to ${url}...`);
+
+        // Log connection attempt
+        setIsLoading(true);
+
         const newSocket = io(url, {
             transports: ['websocket'],
             reconnection: true,
             reconnectionAttempts: Infinity,
+            timeout: 10000, // 10s connection timeout
         });
 
         newSocket.on('connect', () => {
-            console.log('Connected!');
+            console.log('Connected to', url);
             setIsConnected(true);
+            setIsLoading(false); // Stop loading on connect
         });
 
         newSocket.on('disconnect', () => {
